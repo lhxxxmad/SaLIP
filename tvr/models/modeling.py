@@ -9,7 +9,7 @@ from torch.nn.utils.rnn import pad_packed_sequence, pack_padded_sequence
 import torch.nn.functional as F
 from .module_clip import CLIP, convert_weights, _PT_NAME
 from .module_cross import CrossModel, Transformer as TransformerClip
-from .until_module import LayerNorm, AllGather, AllGather2, CrossEn, Emcl
+from .until_module import LayerNorm, AllGather, AllGather2, CrossEn, Slip
 from .transformer import DualTransformer
 from .transformer.mutihead_attention import MultiheadAttention
 from .transformer.xpool import XPool
@@ -31,15 +31,15 @@ class ResidualLinear(nn.Module):
         return x
 
 
-class EMCL(nn.Module):
+class SLIP(nn.Module):
     def __init__(self, config):
-        super(EMCL, self).__init__()
+        super(SLIP, self).__init__()
 
         self.config = config
         self.agg_module = getattr(config, 'agg_module', 'meanP')
         backbone = getattr(config, 'base_encoder', "ViT-B/32")
 
-        self.emcl = Emcl(k=config.centerK,
+        self.slip = Slip(k=config.centerK,
                          stage_num=config.stage_num,
                          momentum=config.momentum,
                          lamd=config.lamd,
@@ -329,7 +329,7 @@ class EMCL(nn.Module):
         #         video_attention_mask = allgather(video_attention_mask, self.config)
         #     video_feat = video_feat * (video_attention_mask.unsqueeze(-1) + 1e-10)
             # video_feat = video_feat / video_attention_mask.sum(dim=-1, keepdim=True)
-        if self.embd_mode == 'emcl':
+        if self.embd_mode == 'slip':
             v_weight = torch.einsum('ad,bvd->abv', [cls, video_feat])
             v_weight = torch.softmax(v_weight / self.config.temp, dim=-1)
             if video_attention_mask is None:
@@ -342,7 +342,7 @@ class EMCL(nn.Module):
             a, d = cls.size()
             video_feat = video_feat.contiguous().view(-1, d)
             all_embedding = torch.cat((video_feat, cls), dim=0)
-            all_embedding = self.emcl(all_embedding, if_train=self.training)
+            all_embedding = self.slip(all_embedding, if_train=self.training)
             video_feat = all_embedding[:video_feat.size(0), :]
             text_feat = all_embedding[video_feat.size(0):, :]
             

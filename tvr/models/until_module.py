@@ -70,7 +70,7 @@ class CrossEn(nn.Module):
         return sim_loss
     
 
-class Emcl(object):
+class Slip(object):
     def __init__(self, k=32, stage_num=9, momentum=0.9, lamd=1, beta=3):
         self.k = k
         self.lamd = lamd

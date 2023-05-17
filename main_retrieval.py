@@ -16,7 +16,7 @@ import torch
 
 from tvr.models.tokenization_clip import SimpleTokenizer as ClipTokenizer
 from tvr.dataloaders.data_dataloaders import DATALOADER_DICT
-from tvr.models.modeling import EMCL, AllGather
+from tvr.models.modeling import SLIP, AllGather
 from tvr.models.optimization import BertAdam
 from tvr.utils.metrics import compute_metrics, tensor_text_to_video_metrics, tensor_video_to_text_sim
 
@@ -81,7 +81,7 @@ def get_args(description='Disentangled Representation Learning for Text-Video Re
 
 
     ## for embedding mode
-    parser.add_argument('--embd_mode', type=str, choices=['emcl', 'xpool', 'cyc', 'wti'])
+    parser.add_argument('--embd_mode', type=str, choices=['slip', 'xpool', 'cyc', 'wti'])
     parser.add_argument('--temp_loss_weight', type=float, default=1.0)
     parser.add_argument('--rec_loss_weight', type=float, default=1.0)
     parser.add_argument('--ret_loss_weight', type=float, default=1.0)
@@ -144,7 +144,7 @@ def set_seed_logger(args):
 
 
 def build_model(args):
-    model = EMCL(args)
+    model = SLIP(args)
     if args.init_model:
         if not exists(args.init_model):
             raise FileNotFoundError
