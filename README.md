@@ -1,6 +1,6 @@
 <div align="center">
   
-# 【🔥】SLIP: Salient Video-Language Representation Learning with Pre-trained Image-Text Model
+# 🔥SLIP: Salient Video-Language Representation Learning with Pre-trained Image-Text Model
   
 </div>
 
