@@ -93,8 +93,7 @@ def get_args(description='Disentangled Representation Learning for Text-Video Re
     parser.add_argument('--sigma', type=float, default=9)
     parser.add_argument('--gamma', type=float, default=0.5)
 
-    ## for saliency predictor
-    #  d_model: int=512, nhead: int=8, num_encoder_layers: int=6, num_decoder_layers: int=6, dim_feedforward: 1025, dropout: float=0.1
+    ## for saliency predicto
     parser.add_argument('--sal_predictor', type=str, default='ca+mlp')
     parser.add_argument('--sal_trans_num_layers', type=int, default=4)
     parser.add_argument('--rec_trans_num_layers1', type=int, default=4)
