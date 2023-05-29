@@ -466,7 +466,7 @@ def eval_epoch(args, model, test_dataloader, device):
             for batch in tqdm(test_dataloader):
                 batch = tuple(t.to(device) for t in batch)
                 text_ids, text_mask, video, video_mask, inds, _ = batch
-                text_feat, video_feat, cls, _, _ = model.get_text_video_feat(text_ids, text_mask, video, video_mask, gauss=args.do_gauss)
+                text_feat, video_feat, cls, text_mask, video_mask = model.get_text_video_feat(text_ids, text_mask, video, video_mask, gauss=args.do_gauss)
                 ids_t.append(inds)
                 batch_mask_t.append(text_mask)
                 batch_mask_v.append(video_mask)
