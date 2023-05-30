@@ -4,6 +4,9 @@ echo "download data"
 hdfs dfs -get hdfs://haruna/home/byte_arnold_lq_mlnlc/user/chengxuxin/lhx/VL/data/MSRVTT.tar.gz
 tar -zxvf MSRVTT.tar.gz
 cd ..
+hdfs dfs -get hdfs://haruna/home/byte_arnold_lq_mlnlc/user/chengxuxin/lhx/VL/EMCL-Net/tvr/models/ViT-B-32.pt
+mv ViT-B-32.pt ./tvr/models
+
 
 export PYTHONWARNINGS='ignore:semaphore_tracker:UserWarning'
 split_hosts=$(echo $ARNOLD_WORKER_HOSTS | tr ":" "\n")
