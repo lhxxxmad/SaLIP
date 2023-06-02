@@ -110,8 +110,10 @@ class SLIP(nn.Module):
         self.sal_pred = config.sal_predictor
         self.saliency_video_trans = nn.Transformer(embed_dim, transformer_heads//2, num_decoder_layers=config.sal_trans_num_layers, num_encoder_layers=config.sal_trans_num_layers, dim_feedforward= embed_dim << 1)
         self.saliency_text_trans = nn.Transformer(embed_dim, transformer_heads//2, num_decoder_layers=config.sal_trans_num_layers, num_encoder_layers=config.sal_trans_num_layers, dim_feedforward= embed_dim << 1)
-        self.rec_video_trans = DualTransformer(num_heads=transformer_heads//2, num_decoder_layers1=config.rec_trans_num_layers1, num_decoder_layers2=config.rec_trans_num_layers1)
-        self.rec_text_trans = DualTransformer(num_heads=transformer_heads//2, num_decoder_layers1=config.rec_trans_num_layers2, num_decoder_layers2=config.rec_trans_num_layers2)
+        self.rec_video_trans1 = DualTransformer(num_heads=transformer_heads//2, num_decoder_layers1=config.rec_trans_num_layers1, num_decoder_layers2=config.rec_trans_num_layers1)
+        self.rec_text_trans1 = DualTransformer(num_heads=transformer_heads//2, num_decoder_layers1=config.rec_trans_num_layers2, num_decoder_layers2=config.rec_trans_num_layers2)
+        self.rec_video_trans2 = DualTransformer(num_heads=transformer_heads//2, num_decoder_layers1=config.rec_trans_num_layers1, num_decoder_layers2=config.rec_trans_num_layers1)
+        self.rec_text_trans2 = DualTransformer(num_heads=transformer_heads//2, num_decoder_layers1=config.rec_trans_num_layers2, num_decoder_layers2=config.rec_trans_num_layers2)
         self.temporal_trans = DualTransformer(num_heads=transformer_heads//2, num_decoder_layers1=config.tmp_trans_num_layers, num_decoder_layers2=config.tmp_trans_num_layers)
         self.video_vec = nn.Parameter(torch.zeros(embed_dim).float(), requires_grad=True)
         self.text_vec = nn.Parameter(torch.zeros(embed_dim).float(), requires_grad=True)
@@ -279,8 +281,8 @@ class SLIP(nn.Module):
         pos_weight = gauss_weight/gauss_weight.max(dim=-1, keepdim=True)[0]
         mask_moment, masked_vec_video = self._mask_moment(video_feat, video_mask, props)
 
-        rec_text = self.rec_text_trans(video_feat, None, masked_text, None, decoding=2, gauss_weight=pos_weight)[1]
-        rec_video = self.rec_video_trans(text_feat, None, mask_moment, None,  decoding=2, gauss_weight=None)[1]
+        rec_text = self.rec_text_trans2(video_feat, None, masked_text, None, decoding=2, gauss_weight=pos_weight)[1]
+        rec_video = self.rec_video_trans2(text_feat, None, mask_moment, None,  decoding=2, gauss_weight=None)[1]
 
         rec_video_loss = self.mse_loss(rec_video, video_feat)
         rec_text_loss = self.mse_loss(rec_text, text_feat)
@@ -352,8 +354,8 @@ class SLIP(nn.Module):
         # rec_video = self.rec_trans(masked_video, video_mask, text_feat, text_mask, decoding=1, gauss_weight=text_weight)[1]
         # rec_text = self.rec_trans(video_feat, video_mask, masked_text, text_mask, decoding=2, gauss_weight=video_weight)[1]
 
-        rec_video = self.rec_video_trans(text_feat, None, masked_video, None,  decoding=2, gauss_weight=text_weight)[1]
-        rec_text = self.rec_text_trans(video_feat, None, masked_text, None, decoding=2, gauss_weight=video_weight)[1]
+        rec_video = self.rec_video_trans1(text_feat, None, masked_video, None,  decoding=2, gauss_weight=text_weight)[1]
+        rec_text = self.rec_text_trans1(video_feat, None, masked_text, None, decoding=2, gauss_weight=video_weight)[1]
 
         # w/o gauss weight
         # rec_video = self.rec_video_trans(text_feat, None, masked_video, None,  decoding=2, gauss_weight=text_weight)[1]
@@ -362,8 +364,8 @@ class SLIP(nn.Module):
         rec_video_loss = self.mse_loss(rec_video, video_feat)
         rec_text_loss = self.mse_loss(rec_text, text_feat)
 
-        # rec_video_loss = rec_video_loss * masked_vec_video * video_weight.unsqueeze(2)
-        # rec_text_loss = rec_text_loss * masked_vec_text * text_weight.unsqueeze(2)
+        rec_video_loss = rec_video_loss * masked_vec_video * video_weight.unsqueeze(2)
+        rec_text_loss = rec_text_loss * masked_vec_text * text_weight.unsqueeze(2)
         return rec_video_loss.mean(), rec_text_loss.mean()
 
     def get_similarity_logits(self, text_feat, cls, video_feat, text_mask, video_mask, video_attention_mask=None, gauss=False):
@@ -450,10 +452,10 @@ class SLIP(nn.Module):
                     cross_text_feat = self.attn(text_feat.permute(1,0,2), video_feat.permute(1,0,2), video_feat.permute(1,0,2))[0].permute(1,0,2)
                     cross_video_feat = self.attn(video_feat.permute(1,0,2), text_feat.permute(1,0,2), text_feat.permute(1,0,2))[0].permute(1,0,2)
                 elif self.sal_pred == 'trans':
-                    # cross_text_feat = self.saliency_text_trans(video_feat.permute(1,0,2), text_feat.permute(1,0,2)).permute(1,0,2)
-                    cross_text_feat = self.rec_text_trans(text_feat, None, video_feat, None, decoding=1)[1]
-                    # cross_video_feat = self.saliency_video_trans(text_feat.permute(1,0,2), video_feat.permute(1,0,2)).permute(1,0,2)
-                    cross_video_feat = self.rec_video_trans(video_feat, None, text_feat, None,  decoding=1, gauss_weight=text_weight)[1]
+                    cross_text_feat = self.saliency_text_trans(video_feat.permute(1,0,2), text_feat.permute(1,0,2)).permute(1,0,2)
+                    # cross_text_feat = self.rec_text_trans(text_feat, None, video_feat, None, decoding=1)[1]
+                    cross_video_feat = self.saliency_video_trans(text_feat.permute(1,0,2), video_feat.permute(1,0,2)).permute(1,0,2)
+                    # cross_video_feat = self.rec_video_trans(video_feat, None, text_feat, None,  decoding=1, gauss_weight=text_weight)[1]
                 elif self.sal_pred == 'mlp':
                     cross_text_feat = text_feat
                     cross_video_feat = video_feat
