@@ -362,8 +362,8 @@ class SLIP(nn.Module):
         rec_video_loss = self.mse_loss(rec_video, video_feat)
         rec_text_loss = self.mse_loss(rec_text, text_feat)
 
-        rec_video_loss = rec_video_loss * masked_vec_video * video_weight.unsqueeze(2)
-        rec_text_loss = rec_text_loss * masked_vec_text * text_weight.unsqueeze(2)
+        # rec_video_loss = rec_video_loss * masked_vec_video * video_weight.unsqueeze(2)
+        # rec_text_loss = rec_text_loss * masked_vec_text * text_weight.unsqueeze(2)
         return rec_video_loss.mean(), rec_text_loss.mean()
 
     def get_similarity_logits(self, text_feat, cls, video_feat, text_mask, video_mask, video_attention_mask=None, gauss=False):
