@@ -238,16 +238,16 @@ class SLIP(nn.Module):
             rec_video_loss, rec_text_loss = self.get_rec_loss(text_feat, video_feat, text_mask, video_mask, text_weight, video_weight)
             temporal_loss = self.get_temporal_order_loss(text_feat, video_feat, text_mask, video_mask, text_weight, video_weight)
             # moment-text rec
-            # rec_mt, rec_tm = self.get_moment_text_rec(text_feat, video_feat, text_mask, video_mask, props, text_weight)
-            final_loss = self.ret_loss_weight * retrieval_loss + self.rec_loss_weight * (rec_video_loss + rec_text_loss)/2.0 + self.temp_loss_weight * temporal_loss
-            # final_loss = self.ret_loss_weight * retrieval_loss + self.rec_loss_weight * (rec_video_loss + rec_text_loss)/2.0 # + (rec_mt + rec_tm)/2.0
+            rec_mt, rec_tm = self.get_moment_text_rec(text_feat, video_feat, text_mask, video_mask, props, text_weight)
+            # final_loss = self.ret_loss_weight * retrieval_loss + self.rec_loss_weight * (rec_video_loss + rec_text_loss)/2.0 + self.temp_loss_weight * temporal_loss
+            final_loss = self.ret_loss_weight * retrieval_loss + self.rec_loss_weight * (rec_video_loss + rec_text_loss)/2.0 + (rec_mt + rec_tm)/2.0
             final_loss_dict = {'final_loss': final_loss.item(), 
                                 'retrieval_loss': self.ret_loss_weight * retrieval_loss.item(), 
                                 'rec_video_loss': self.rec_loss_weight * rec_video_loss.item(), 
                                 'rec_text_loss': self.rec_loss_weight * rec_text_loss.item(),
-                                # 'rec_mt_loss': rec_mt.item(),
-                                # 'rec_tm_loss':rec_tm.item(),
-                                'temporal_loss': self.temp_loss_weight * temporal_loss.item()
+                                'rec_mt_loss': rec_mt.item(),
+                                'rec_tm_loss':rec_tm.item(),
+                                # 'temporal_loss': self.temp_loss_weight * temporal_loss.item()
                                 }
             
             return final_loss, final_loss_dict
@@ -281,8 +281,8 @@ class SLIP(nn.Module):
         pos_weight = gauss_weight/gauss_weight.max(dim=-1, keepdim=True)[0]
         mask_moment, masked_vec_video = self._mask_moment(video_feat, video_mask, props)
 
-        rec_text = self.rec_text_trans2(video_feat, None, masked_text, None, decoding=2, gauss_weight=pos_weight)[1]
-        rec_video = self.rec_video_trans2(text_feat, None, mask_moment, None,  decoding=2, gauss_weight=None)[1]
+        rec_text = self.rec_text_trans1(video_feat, None, masked_text, None, decoding=2, gauss_weight=pos_weight)[1]
+        rec_video = self.rec_video_trans1(text_feat, None, mask_moment, None,  decoding=2, gauss_weight=None)[1]
 
         rec_video_loss = self.mse_loss(rec_video, video_feat)
         rec_text_loss = self.mse_loss(rec_text, text_feat)
@@ -452,10 +452,10 @@ class SLIP(nn.Module):
                     cross_text_feat = self.attn(text_feat.permute(1,0,2), video_feat.permute(1,0,2), video_feat.permute(1,0,2))[0].permute(1,0,2)
                     cross_video_feat = self.attn(video_feat.permute(1,0,2), text_feat.permute(1,0,2), text_feat.permute(1,0,2))[0].permute(1,0,2)
                 elif self.sal_pred == 'trans':
-                    cross_text_feat = self.saliency_text_trans(video_feat.permute(1,0,2), text_feat.permute(1,0,2)).permute(1,0,2)
-                    # cross_text_feat = self.rec_text_trans(text_feat, None, video_feat, None, decoding=1)[1]
-                    cross_video_feat = self.saliency_video_trans(text_feat.permute(1,0,2), video_feat.permute(1,0,2)).permute(1,0,2)
-                    # cross_video_feat = self.rec_video_trans(video_feat, None, text_feat, None,  decoding=1, gauss_weight=text_weight)[1]
+                    # cross_text_feat = self.saliency_text_trans(video_feat.permute(1,0,2), text_feat.permute(1,0,2)).permute(1,0,2)
+                    cross_text_feat = self.rec_text_trans1(text_feat, None, video_feat, None, decoding=1)[1]
+                    # cross_video_feat = self.saliency_video_trans(text_feat.permute(1,0,2), video_feat.permute(1,0,2)).permute(1,0,2)
+                    cross_video_feat = self.rec_video_trans1(video_feat, None, text_feat, None,  decoding=1, gauss_weight=text_weight)[1]
                 elif self.sal_pred == 'mlp':
                     cross_text_feat = text_feat
                     cross_video_feat = video_feat
@@ -474,9 +474,15 @@ class SLIP(nn.Module):
             # saliency token
             if gauss:
                 # text_weight = self.text_weight_fc(cross_text_feat).squeeze(2)  # B_t x N_t x D -> B_t x N_t
-                text_weight =  self.text_saliency_fc(cross_text_feat[:,-1])
-                video_weight =  self.video_saliency_fc(cross_video_feat[:,-1])
+                # text_weight =  self.text_saliency_fc(cross_text_feat[:,:-1])
+                # video_weight =  self.video_saliency_fc(cross_video_feat[:,:-1])
                 props = self.moment_fc(cross_video_feat[:,-1])
+                cross_video_feat = cross_video_feat[:, : -1]
+                cross_text_feat = cross_text_feat[:, : -1]
+
+                text_weight = self.text_weight_fc(cross_text_feat).squeeze(2)  # B_t x N_t x D -> B_t x N_t
+                video_weight = self.video_weight_fc(cross_video_feat).squeeze(2) # B_v x N_v x D -> B_v x N_v
+
                 text_feat = text_feat[:, : -1]
                 video_feat = video_feat[:, : -1]
                 text_mask = text_mask[:, : -1]
