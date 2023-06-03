@@ -40,7 +40,7 @@ split_hosts=($split_hosts)
 # python3 -m torch.distributed.launch --nproc_per_node=1 \
 # --master_addr ${ARNOLD_WORKER_0_HOST} \
 # --master_port ${ARNOLD_WORKER_0_PORT} \
-# main.py.py \
+# main.py \
 # --do_eval 1 \
 # --workers 0 \
 # --n_display 50 \
@@ -64,7 +64,7 @@ split_hosts=($split_hosts)
 # python3 -m torch.distributed.launch --nproc_per_node=1 \
 # --master_addr ${split_hosts[0]} \
 # --master_port ${split_hosts[1]} \
-# main.py.py \
+# main.py \
 # --do_train 1 \
 # --workers 0 \
 # --n_display 50 \
@@ -91,7 +91,7 @@ split_hosts=($split_hosts)
 # python3 -m torch.distributed.launch --nproc_per_node=1 \
 # --master_addr ${split_hosts[0]} \
 # --master_port ${split_hosts[1]} \
-# main.py.py \
+# main.py \
 # --do_train 1 \
 # --workers 0 \
 # --n_display 50 \
@@ -115,7 +115,7 @@ split_hosts=($split_hosts)
 # python3 -m torch.distributed.launch --nproc_per_node=1 \
 # --master_addr ${split_hosts[0]} \
 # --master_port ${split_hosts[1]} \
-# main.py.py \
+# main.py \
 # --do_train 1 \
 # --workers 0 \
 # --n_display 50 \
@@ -139,7 +139,7 @@ CUDA_VISIBLE_DEVICES=0 \
 python3 -m torch.distributed.launch --nproc_per_node=1 \
 --master_addr ${split_hosts[0]} \
 --master_port ${split_hosts[1]} \
-main.py.py \
+main.py \
 --do_train 1 \
 --workers 0 \
 --n_display 50 \
@@ -165,7 +165,7 @@ main.py.py \
 # python3 -m torch.distributed.launch --nproc_per_node=1 \
 # --master_addr ${ARNOLD_WORKER_0_HOST} \
 # --master_port ${ARNOLD_WORKER_0_PORT} \
-# main.py.py \
+# main.py \
 # --do_eval 1 \
 # --workers 0 \
 # --n_display 10 \
