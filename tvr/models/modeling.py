@@ -282,7 +282,7 @@ class SLIP(nn.Module):
         mask_moment, masked_vec_video = self._mask_moment(video_feat, video_mask, gauss_center, gauss_width)
 
         rec_text = self.rec_text_trans1(video_feat, None, masked_text, None, decoding=2, gauss_weight=pos_weight)[1]
-        rec_video = self.rec_video_trans1(text_feat, None, mask_moment, None,  decoding=2, gauss_weight=None)[1]
+        rec_video = self.rec_video_trans1(text_feat, None, mask_moment, None,  decoding=2, gauss_weight=text_weight)[1]
 
         rec_video_loss = self.mse_loss(rec_video, video_feat)
         rec_text_loss = self.mse_loss(rec_text, text_feat)
@@ -452,10 +452,10 @@ class SLIP(nn.Module):
                     cross_text_feat = self.attn(text_feat.permute(1,0,2), video_feat.permute(1,0,2), video_feat.permute(1,0,2))[0].permute(1,0,2)
                     cross_video_feat = self.attn(video_feat.permute(1,0,2), text_feat.permute(1,0,2), text_feat.permute(1,0,2))[0].permute(1,0,2)
                 elif self.sal_pred == 'trans':
-                    # cross_text_feat = self.saliency_text_trans(video_feat.permute(1,0,2), text_feat.permute(1,0,2)).permute(1,0,2)
-                    cross_text_feat = self.rec_text_trans1(text_feat, None, video_feat, None, decoding=1)[1]
-                    # cross_video_feat = self.saliency_video_trans(text_feat.permute(1,0,2), video_feat.permute(1,0,2)).permute(1,0,2)
-                    cross_video_feat = self.rec_video_trans1(video_feat, None, text_feat, None,  decoding=1)[1]
+                    cross_text_feat = self.saliency_text_trans(video_feat.permute(1,0,2), text_feat.permute(1,0,2)).permute(1,0,2)
+                    # cross_text_feat = self.rec_text_trans1(text_feat, None, video_feat, None, decoding=1)[1]
+                    cross_video_feat = self.saliency_video_trans(text_feat.permute(1,0,2), video_feat.permute(1,0,2)).permute(1,0,2)
+                    # cross_video_feat = self.rec_video_trans1(video_feat, None, text_feat, None,  decoding=1)[1]
                 elif self.sal_pred == 'mlp':
                     cross_text_feat = text_feat
                     cross_video_feat = video_feat
