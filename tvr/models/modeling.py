@@ -455,7 +455,7 @@ class SLIP(nn.Module):
                     # cross_text_feat = self.saliency_text_trans(video_feat.permute(1,0,2), text_feat.permute(1,0,2)).permute(1,0,2)
                     cross_text_feat = self.rec_text_trans1(text_feat, None, video_feat, None, decoding=1)[1]
                     # cross_video_feat = self.saliency_video_trans(text_feat.permute(1,0,2), video_feat.permute(1,0,2)).permute(1,0,2)
-                    cross_video_feat = self.rec_video_trans1(video_feat, None, text_feat, None,  decoding=1, gauss_weight=text_weight)[1]
+                    cross_video_feat = self.rec_video_trans1(video_feat, None, text_feat, None,  decoding=1)[1]
                 elif self.sal_pred == 'mlp':
                     cross_text_feat = text_feat
                     cross_video_feat = video_feat
@@ -474,8 +474,8 @@ class SLIP(nn.Module):
             # saliency token
             if gauss:
                 # text_weight = self.text_weight_fc(cross_text_feat).squeeze(2)  # B_t x N_t x D -> B_t x N_t
-                text_weight =  self.text_saliency_fc(cross_text_feat[:,:-1])
-                video_weight =  self.video_saliency_fc(cross_video_feat[:,:-1])
+                text_weight =  self.text_saliency_fc(cross_text_feat[:,-1])
+                video_weight =  self.video_saliency_fc(cross_video_feat[:,-1])
                 props = self.moment_fc(cross_video_feat[:,-1])
                 # cross_video_feat = cross_video_feat[:, : -1]
                 # cross_text_feat = cross_text_feat[:, : -1]
