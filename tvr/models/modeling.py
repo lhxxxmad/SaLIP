@@ -279,7 +279,7 @@ class SLIP(nn.Module):
 
         gauss_weight = self.generate_gauss_weight(frame_len, gauss_center, gauss_width)
         pos_weight = gauss_weight/gauss_weight.max(dim=-1, keepdim=True)[0]
-        mask_moment, masked_vec_video = self._mask_moment(video_feat, video_mask, props)
+        mask_moment, masked_vec_video = self._mask_moment(video_feat, video_mask, gauss_center, gauss_width)
 
         rec_text = self.rec_text_trans1(video_feat, None, masked_text, None, decoding=2, gauss_weight=pos_weight)[1]
         rec_video = self.rec_video_trans1(text_feat, None, mask_moment, None,  decoding=2, gauss_weight=None)[1]
@@ -670,9 +670,11 @@ class SLIP(nn.Module):
         # out_feat = feat.masked_fill(masked_vec == 1, float("-inf"))
         out_feat = feat.masked_fill(masked_vec == 1, 0)
         return out_feat, masked_vec
-    def _mask_moment(self, video_feat, video_mask, props):
+    def _mask_moment(self, video_feat, video_mask, center, width):
         video_len = video_mask.sum(1)
-        star, end = (video_len * props[:,0]).to(torch.int), (video_len * props[:,1]).to(torch.int)
+
+        star, end =  torch.clamp(center-width/2, min=0), torch.clamp(center+width/2, max=1)
+        star, end = (video_len * star).to(torch.int), (video_len * end).to(torch.int)
         masked_vec = torch.zeros(video_mask.shape).byte().cuda()
 
         for i, l in enumerate(video_len):
