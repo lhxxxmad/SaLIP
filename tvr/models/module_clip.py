@@ -250,56 +250,10 @@ class QuickGELU(nn.Module):
     def forward(self, x: torch.Tensor):
         return x * torch.sigmoid(1.702 * x)
 
-class ResidualAttentionBlock(nn.Module):
-    def __init__(self, d_model: int, n_head: int, attn_mask: torch.Tensor = None, scale=1., num_tadapter=1, num_frames=8, drop_path=0.):
-        super().__init__()
-        self.num_tadapter = num_tadapter
-        self.attn = nn.MultiheadAttention(d_model, n_head)
-        self.ln_1 = LayerNorm(d_model)
-        self.mlp = nn.Sequential(OrderedDict([
-            ("c_fc", nn.Linear(d_model, d_model * 4)),
-            ("gelu", QuickGELU()),
-            ("c_proj", nn.Linear(d_model * 4, d_model))
-        ]))
-        self.ln_2 = LayerNorm(d_model)
-        self.attn_mask = attn_mask
-        self.n_head = n_head
-
-        self.MLP_Adapter = Adapter(d_model, skip_connect=False)
-        self.S_Adapter = Adapter(d_model)
-        self.scale = scale
-        self.T_Adapter = Adapter(d_model, skip_connect=False)
-        if num_tadapter == 2:
-            self.T_Adapter_in = Adapter(d_model)
-        self.num_frames = num_frames
-        self.drop_path = DropPath(drop_path) if drop_path > 0. else nn.Identity()
-
-    def attention(self, x: torch.Tensor):
-        self.attn_mask = self.attn_mask.to(dtype=x.dtype, device=x.device) if self.attn_mask is not None else None
-        return self.attn(x, x, x, need_weights=False, attn_mask=self.attn_mask)[0]
-
-    def forward(self, x: torch.Tensor):
-        ## x shape [HW+1, BT, D]
-        n, bt, d = x.shape
-        ## temporal adaptation
-        xt = rearrange(x, 'n (b t) d -> t (b n) d', t=self.num_frames)
-        if self.num_tadapter == 2:
-            xt = self.T_Adapter(self.attention(self.T_Adapter_in(self.ln_1(xt))))
-        else:
-            xt = self.T_Adapter(self.attention(self.ln_1(xt)))
-        xt = rearrange(xt, 't (b n) d -> n (b t) d', n=n)
-        x = x + self.drop_path(xt)
-        ## spatial adaptation
-        x = x + self.S_Adapter(self.attention(self.ln_1(x)))
-        ## joint adaptation
-        xn = self.ln_2(x)
-        x = x + self.mlp(xn) + self.drop_path(self.scale * self.MLP_Adapter(xn))
-        return x
-
 # class ResidualAttentionBlock(nn.Module):
-#     def __init__(self, d_model: int, n_head: int, attn_mask=None):
-#         super(ResidualAttentionBlock, self).__init__()
-
+#     def __init__(self, d_model: int, n_head: int, attn_mask: torch.Tensor = None, scale=1., num_tadapter=1, num_frames=8, drop_path=0.):
+#         super().__init__()
+#         self.num_tadapter = num_tadapter
 #         self.attn = nn.MultiheadAttention(d_model, n_head)
 #         self.ln_1 = LayerNorm(d_model)
 #         self.mlp = nn.Sequential(OrderedDict([
@@ -309,19 +263,64 @@ class ResidualAttentionBlock(nn.Module):
 #         ]))
 #         self.ln_2 = LayerNorm(d_model)
 #         self.attn_mask = attn_mask
+#         self.n_head = n_head
+
+#         self.MLP_Adapter = Adapter(d_model, skip_connect=False)
+#         self.S_Adapter = Adapter(d_model)
+#         self.scale = scale
+#         self.T_Adapter = Adapter(d_model, skip_connect=False)
+#         if num_tadapter == 2:
+#             self.T_Adapter_in = Adapter(d_model)
+#         self.num_frames = num_frames
+#         self.drop_path = DropPath(drop_path) if drop_path > 0. else nn.Identity()
 
 #     def attention(self, x: torch.Tensor):
-#         attn_mask_ = self.attn_mask
-#         if self.attn_mask is not None and hasattr(self.attn_mask, '__call__'):
-#             attn_mask_ = self.attn_mask(x.size(0))  # LND
+#         self.attn_mask = self.attn_mask.to(dtype=x.dtype, device=x.device) if self.attn_mask is not None else None
+#         return self.attn(x, x, x, need_weights=False, attn_mask=self.attn_mask)[0]
 
-#         attn_mask_ = attn_mask_.to(dtype=x.dtype, device=x.device) if attn_mask_ is not None else None
-#         return self.attn(x, x, x, need_weights=False, attn_mask=attn_mask_)[0]
-
-#     def forward(self, x):
-#         x = x + self.attention(self.ln_1(x))
-#         x = x + self.mlp(self.ln_2(x))
+#     def forward(self, x: torch.Tensor):
+#         ## x shape [HW+1, BT, D]
+#         n, bt, d = x.shape
+#         ## temporal adaptation
+#         xt = rearrange(x, 'n (b t) d -> t (b n) d', t=self.num_frames)
+#         if self.num_tadapter == 2:
+#             xt = self.T_Adapter(self.attention(self.T_Adapter_in(self.ln_1(xt))))
+#         else:
+#             xt = self.T_Adapter(self.attention(self.ln_1(xt)))
+#         xt = rearrange(xt, 't (b n) d -> n (b t) d', n=n)
+#         x = x + self.drop_path(xt)
+#         ## spatial adaptation
+#         x = x + self.S_Adapter(self.attention(self.ln_1(x)))
+#         ## joint adaptation
+#         xn = self.ln_2(x)
+#         x = x + self.mlp(xn) + self.drop_path(self.scale * self.MLP_Adapter(xn))
 #         return x
+
+class ResidualAttentionBlock(nn.Module):
+    def __init__(self, d_model: int, n_head: int, attn_mask=None):
+        super(ResidualAttentionBlock, self).__init__()
+        self.attn = nn.MultiheadAttention(d_model, n_head)
+        self.ln_1 = LayerNorm(d_model)
+        self.mlp = nn.Sequential(OrderedDict([
+            ("c_fc", nn.Linear(d_model, d_model * 4)),
+            ("gelu", QuickGELU()),
+            ("c_proj", nn.Linear(d_model * 4, d_model))
+        ]))
+        self.ln_2 = LayerNorm(d_model)
+        self.attn_mask = attn_mask
+
+    def attention(self, x: torch.Tensor):
+        attn_mask_ = self.attn_mask
+        if self.attn_mask is not None and hasattr(self.attn_mask, '__call__'):
+            attn_mask_ = self.attn_mask(x.size(0))  # LND
+
+        attn_mask_ = attn_mask_.to(dtype=x.dtype, device=x.device) if attn_mask_ is not None else None
+        return self.attn(x, x, x, need_weights=False, attn_mask=attn_mask_)[0]
+
+    def forward(self, x):
+        x = x + self.attention(self.ln_1(x))
+        x = x + self.mlp(self.ln_2(x))
+        return x
 
 
 class Transformer(nn.Module):
