@@ -5,29 +5,29 @@ split_hosts=$(echo $ARNOLD_WORKER_HOSTS | tr ":" "\n")
 split_hosts=($split_hosts)
 
 # MSRVTT --do_train 1 \
-# CUDA_VISIBLE_DEVICES=0 \
-# python3 -m torch.distributed.launch --nproc_per_node=1 \
-# --master_addr ${ARNOLD_WORKER_0_HOST} \
-# --master_port ${ARNOLD_WORKER_0_PORT} \
-# main.py \
-# --do_train 1 \
-# --workers 0 \
-# --n_display 50 \
-# --epochs 5 \
-# --lr 1e-4 \
-# --coef_lr 1e-3 \
-# --batch_size 128 \
-# --batch_size_val 128 \
-# --anno_path /mnt/bd/cxx-dataset/CLIP4Clip/data/MSRVTT/msrvtt_data \
-# --video_path /mnt/bd/cxx-dataset/CLIP4Clip/data/MSRVTT/MSRVTT_Videos \
-# --datatype msrvtt \
-# --max_words 32 \
-# --max_frames 12 \
-# --video_framerate 1 \
-# --output_dir outputs/msrvtt \
-# --embd_mode wti \
-# --do_gauss 1 \
-# --interact_mode FGW \
+CUDA_VISIBLE_DEVICES=0 \
+python3 -m torch.distributed.launch --nproc_per_node=1 \
+--master_addr ${ARNOLD_WORKER_0_HOST} \
+--master_port ${ARNOLD_WORKER_0_PORT} \
+main.py \
+--do_train 1 \
+--workers 0 \
+--n_display 50 \
+--epochs 5 \
+--lr 1e-4 \
+--coef_lr 1e-3 \
+--batch_size 128 \
+--batch_size_val 128 \
+--anno_path /mnt/bd/cxx-dataset/CLIP4Clip/data/MSRVTT/msrvtt_data \
+--video_path /mnt/bd/cxx-dataset/CLIP4Clip/data/MSRVTT/MSRVTT_Videos \
+--datatype msrvtt \
+--max_words 32 \
+--max_frames 12 \
+--video_framerate 1 \
+--output_dir outputs/msrvtt \
+--embd_mode wti \
+--do_gauss 1 \
+--interact_mode FGW \
 # --sal_predictor trans
 # --init_model /mnt/bd/cxx-dataset/EMCL-Net/best_outputs/msrvtt/best.bin
 # --base_encoder None \
@@ -135,28 +135,28 @@ split_hosts=($split_hosts)
 # --do_gauss 0 \
 
 # anet
-CUDA_VISIBLE_DEVICES=0 \
-python3 -m torch.distributed.launch --nproc_per_node=1 \
---master_addr ${split_hosts[0]} \
---master_port ${split_hosts[1]} \
-main.py \
---do_train 1 \
---workers 0 \
---n_display 50 \
---epochs 5 \
---lr 1e-4 \
---coef_lr 1e-3 \
---batch_size 8 \
---batch_size_val 8 \
---anno_path /mnt/bd/cxx-dataset/CLIP4Clip/data/activitynet/anet \
---video_path /mnt/bd/cxx-dataset/CLIP4Clip/data/activitynet/anet/Activity_Videos \
---datatype activity \
---max_words 64 \
---max_frames 64 \
---video_framerate 1 \
---output_dir outputs/activity \
---embd_mode wti \
---do_gauss 1 \
+# CUDA_VISIBLE_DEVICES=0 \
+# python3 -m torch.distributed.launch --nproc_per_node=1 \
+# --master_addr ${split_hosts[0]} \
+# --master_port ${split_hosts[1]} \
+# main.py \
+# --do_train 1 \
+# --workers 0 \
+# --n_display 50 \
+# --epochs 5 \
+# --lr 1e-4 \
+# --coef_lr 1e-3 \
+# --batch_size 8 \
+# --batch_size_val 8 \
+# --anno_path /mnt/bd/cxx-dataset/CLIP4Clip/data/activitynet/anet \
+# --video_path /mnt/bd/cxx-dataset/CLIP4Clip/data/activitynet/anet/Activity_Videos \
+# --datatype activity \
+# --max_words 64 \
+# --max_frames 64 \
+# --video_framerate 1 \
+# --output_dir outputs/activity \
+# --embd_mode wti \
+# --do_gauss 1 \
 # --init_model /mnt/bd/cxx-dataset/EMCL-Net/best_outputs/anet/best.bin
 
 
