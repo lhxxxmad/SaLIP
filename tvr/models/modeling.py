@@ -480,8 +480,8 @@ class SLIP(nn.Module):
                 # cross_video_feat = cross_video_feat[:, : -1]
                 # cross_text_feat = cross_text_feat[:, : -1]
 
-                text_weight = self.text_weight_fc(cross_text_feat).squeeze(2)  # B_t x N_t x D -> B_t x N_t
-                video_weight = self.video_weight_fc(cross_video_feat).squeeze(2) # B_v x N_v x D -> B_v x N_v
+                # text_weight = self.text_weight_fc(cross_text_feat).squeeze(2)  # B_t x N_t x D -> B_t x N_t
+                # video_weight = self.video_weight_fc(cross_video_feat).squeeze(2) # B_v x N_v x D -> B_v x N_v
 
                 text_feat = text_feat[:, : -1]
                 video_feat = video_feat[:, : -1]
