@@ -281,8 +281,8 @@ class SLIP(nn.Module):
         pos_weight = gauss_weight/gauss_weight.max(dim=-1, keepdim=True)[0]
         mask_moment, masked_vec_video = self._mask_moment(video_feat, video_mask, gauss_center, gauss_width)
 
-        rec_text = self.rec_text_trans1(video_feat, None, masked_text, None, decoding=2, gauss_weight=pos_weight)[1]
-        rec_video = self.rec_video_trans1(text_feat, None, mask_moment, None,  decoding=2, gauss_weight=text_weight)[1]
+        rec_text = self.rec_text_trans2(video_feat, None, masked_text, None, decoding=2, gauss_weight=pos_weight)[1]
+        rec_video = self.rec_video_trans2(text_feat, None, mask_moment, None,  decoding=2, gauss_weight=text_weight)[1]
 
         rec_video_loss = self.mse_loss(rec_video, video_feat)
         rec_text_loss = self.mse_loss(rec_text, text_feat)
