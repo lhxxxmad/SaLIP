@@ -18,6 +18,7 @@ import numpy as np
 allgather = AllGather.apply
 allgather2 = AllGather2.apply
 import pdb
+import math
 import itertools
 class ResidualLinear(nn.Module):
     def __init__(self, d_int: int):
@@ -734,6 +735,12 @@ class SLIP(nn.Module):
         return video_feat
 
 
+    def get_marginal_loss(self, cosx, m, s):
+        sinx = torch.sqrt(1.0 - torch.pow(cosx, 2))
+        cosm = math.cos(m)
+        sinm = math.sin(m)
+        return (cosx * cosm - sinx * sinm)/s
+        
     def get_similarity_loss(self, text_feat, cls, video_feat, text_mask, video_mask, shaped=False, video_attention_mask=None):
         if shaped is False:
             text_mask = text_mask.view(-1, text_mask.shape[-1])
@@ -742,9 +749,14 @@ class SLIP(nn.Module):
         t2v_logits, v2t_logits, text_weight, video_weight, props = self.get_similarity_logits(text_feat, cls, video_feat, text_mask, video_mask, video_attention_mask=video_attention_mask, gauss=self.do_gauss)
         
         logit_scale = self.clip.logit_scale.exp()
+        # pdb.set_trace()
+        t2v_logits = self.get_marginal_loss(t2v_logits, 0.25, 0.05)/logit_scale
+        v2t_logits = self.get_marginal_loss(v2t_logits, 0.25, 0.05)/logit_scale
+
         loss_t2v = self.loss_fct(t2v_logits * logit_scale)
         loss_v2t = self.loss_fct(v2t_logits * logit_scale)
         
+
         loss = (loss_t2v + loss_v2t) / 2
 
         return loss, text_weight, video_weight, props
