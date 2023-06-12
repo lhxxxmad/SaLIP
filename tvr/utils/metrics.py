@@ -6,6 +6,22 @@ from __future__ import print_function
 import numpy as np
 import torch
 
+def calculate_IoU_batch(i0, i1):
+    union = (np.min(np.stack([i0[0], i1[0]], 0), 0), np.max(np.stack([i0[1], i1[1]], 0), 0))
+    inter = (np.max(np.stack([i0[0], i1[0]], 0), 0), np.min(np.stack([i0[1], i1[1]], 0), 0))
+    iou = 1.0 * (inter[1] - inter[0] + 1e-10) / (union[1] - union[0] + 1e-10)
+    iou[union[1] - union[0] < -1e-5] = 0
+    iou[iou < 0] = 0.0
+    return iou
+    
+def top_1_metric(pred, label):
+    result = {}
+    bsz = pred.shape[0]
+    iou = calculate_IoU_batch((pred[:, 0], pred[:, 1]), (label[:, 0], label[:, 1]))
+    result['mIoU'] = np.mean(iou)
+    for i in range(1, 10, 2):
+        result['IoU@0.{}'.format(i)] = 1.0 * np.sum(iou >= i / 10) / bsz
+    return result
 
 def compute_metrics(x):
     sx = np.sort(-x, axis=1)
