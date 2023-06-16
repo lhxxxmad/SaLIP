@@ -130,6 +130,9 @@ class SLIP(nn.Module):
         self.temp_loss_weight = config.temp_loss_weight
         self.rec_loss_weight = config.rec_loss_weight
         self.ret_loss_weight = config.ret_loss_weight
+        self.margin1 = 0.1
+        self.lambda1 = 0.1
+        self.alpha = 0.1
         self.trans = DualTransformer()
         ## ===> end of generate Gaussian masks
 
@@ -239,15 +242,18 @@ class SLIP(nn.Module):
             rec_video_loss, rec_text_loss = self.get_rec_loss(text_feat, video_feat, text_mask, video_mask, text_weight, video_weight)
             temporal_loss = self.get_temporal_order_loss(text_feat, video_feat, text_mask, video_mask, text_weight, video_weight)
             # moment-text rec
-            rec_mt, rec_tm = self.get_moment_text_rec(text_feat, video_feat, text_mask, video_mask, props, text_weight)
+            rec_mt, rec_tm, div_loss, ivc_loss = self.get_moment_text_rec(text_feat, video_feat, text_mask, video_mask, props, text_weight)
+            rec_mt, rec_tm, div_loss, ivc_loss = rec_mt.mean(), rec_tm.mean(), div_loss.mean(), ivc_loss.mean()
             # final_loss = self.ret_loss_weight * retrieval_loss + self.rec_loss_weight * (rec_video_loss + rec_text_loss)/2.0 + self.temp_loss_weight * temporal_loss
-            final_loss = self.ret_loss_weight * retrieval_loss + self.rec_loss_weight * (rec_video_loss + rec_text_loss)/2.0 + (rec_mt + rec_tm)/2.0
+            final_loss = self.ret_loss_weight * retrieval_loss + self.rec_loss_weight * (rec_video_loss + rec_text_loss)/2.0 + (rec_mt + rec_tm)/2.0 + div_loss + ivc_loss
             final_loss_dict = {'final_loss': final_loss.item(), 
                                 'retrieval_loss': self.ret_loss_weight * retrieval_loss.item(), 
                                 'rec_video_loss': self.rec_loss_weight * rec_video_loss.item(), 
                                 'rec_text_loss': self.rec_loss_weight * rec_text_loss.item(),
                                 'rec_mt_loss': rec_mt.item(),
                                 'rec_tm_loss':rec_tm.item(),
+                                'div_loss': div_loss.item(),
+                                'ivc_loss': ivc_loss.item()
                                 # 'temporal_loss': self.temp_loss_weight * temporal_loss.item()
                                 }
             
@@ -283,14 +289,27 @@ class SLIP(nn.Module):
         mask_moment, masked_vec_video = self._mask_moment(video_feat, video_mask, gauss_center, gauss_width)
 
         rec_text = self.rec_text_trans2(video_feat, None, masked_text, None, decoding=2, gauss_weight=pos_weight)[1]
-        rec_video = self.rec_video_trans2(text_feat, None, mask_moment, None,  decoding=2, gauss_weight=text_weight)[1]
+        rec_video = self.rec_video_trans2(text_feat, None, mask_moment, None,  decoding=2, gauss_weight=None)[1]
+        rec_ref = self.rec_video_trans2(text_feat, None, video_feat, None,  decoding=2, gauss_weight=None)[1]
 
-        rec_video_loss = self.mse_loss(rec_video, video_feat)
         rec_text_loss = self.mse_loss(rec_text, text_feat)
+        rec_video_loss = self.mse_loss(rec_video, video_feat)
+        rec_ref_loss = self.mse_loss(rec_ref, video_feat)
 
         rec_video_loss = rec_video_loss * masked_vec_video * pos_weight.unsqueeze(2)
-        rec_text_loss = rec_text_loss * masked_vec_text.unsqueeze(-1) * text_weight.unsqueeze(2)
-        return rec_text_loss.mean(), rec_video_loss.mean()
+        rec_text_loss = rec_text_loss * masked_vec_text.unsqueeze(-1) #* text_weight.unsqueeze(2)
+        # pdb.set_trace()
+        gauss_weight = gauss_weight.view(bsz, self.num_props, -1)
+        gauss_weight = gauss_weight / gauss_weight.sum(dim=-1, keepdim=True)
+        target = torch.eye(self.num_props).unsqueeze(0).cuda() * self.lambda1
+        source = torch.matmul(gauss_weight, gauss_weight.transpose(1, 2))
+        div_loss = torch.norm(target - source, dim=(1, 2))**2
+
+        tmp_0 = torch.zeros_like(rec_video_loss).cuda()
+        tmp_0.requires_grad = False
+        ivc_loss = torch.max(rec_video_loss - rec_ref_loss + self.margin1, tmp_0)
+
+        return rec_text_loss, rec_video_loss, div_loss, ivc_loss
 
     def BCE_loss(self, logits, labels, mask):
         labels = labels.type_as(logits)
@@ -433,7 +452,7 @@ class SLIP(nn.Module):
         elif self.embd_mode == 'wti':
             video_mask = video_mask.squeeze()
             text_mask = text_mask.squeeze()
-
+            props = None
             ############################
             # SA
             # cross-attn
@@ -555,9 +574,8 @@ class SLIP(nn.Module):
                 video_feat = torch.sum(video_feat, dim=1) / (video_sum.unsqueeze(1))
                 retrieve_logits = torch.einsum('ad,bd->ab', [text_feat, video_feat])
                 
-        if self.training:
-            return retrieve_logits, retrieve_logits.T, text_weight, video_weight, props
-        return retrieve_logits, retrieve_logits.T
+        return retrieve_logits, retrieve_logits.T, text_weight, video_weight, props
+        # return retrieve_logits, retrieve_logits.T, props
 
     def _mean_pooling_for_similarity_visual(self, video_feat, video_mask,):
         video_mask_un = video_mask.to(dtype=torch.float).unsqueeze(-1)
@@ -684,7 +702,7 @@ class SLIP(nn.Module):
             elif star[i] == end[i]:
                 masked_vec[i][star[i]] = 1
             else:
-                masked_vec[i][end[i]:star[i]] = 1
+                masked_vec[i] = 1
         masked_vec = masked_vec.unsqueeze(-1)
         video_feat = video_feat.masked_fill(masked_vec == 1, 0)
         return video_feat, masked_vec
@@ -749,7 +767,7 @@ class SLIP(nn.Module):
         t2v_logits, v2t_logits, text_weight, video_weight, props = self.get_similarity_logits(text_feat, cls, video_feat, text_mask, video_mask, video_attention_mask=video_attention_mask, gauss=self.do_gauss)
         
         logit_scale = self.clip.logit_scale.exp()
-        # pdb.set_trace()
+
         t2v_logits = self.get_marginal_loss(t2v_logits, 0.25, 0.05)/logit_scale
         v2t_logits = self.get_marginal_loss(v2t_logits, 0.25, 0.05)/logit_scale
 

@@ -5,6 +5,7 @@ from .dataloader_activitynet_retrieval import ActivityNetDataset
 from .dataloader_didemo_retrieval import DiDeMoDataset
 from .dataloader_lsmdc_retrieval import LsmdcDataset
 from .dataloader_msvd_retrieval import MsvdDataset
+from .dataloader_activitynet_grounding import ActivityNetDataset_Grounding
 
 
 def dataloader_msrvtt_train(args, tokenizer):
@@ -163,6 +164,50 @@ def dataloader_activity_test(args, tokenizer, subset="test"):
     )
     return dataloader_activity, len(activity_testset)
 
+def dataloader_activity_test_grounding(args, tokenizer, subset="val"):
+    activity_testset = ActivityNetDataset_Grounding(
+        subset=subset,
+        data_path=args.anno_path,
+        features_path=args.video_path,
+        max_words=args.max_words,
+        feature_framerate=args.video_framerate,
+        tokenizer=tokenizer,
+        max_frames=args.max_frames
+    )
+    try:
+        test_sampler = torch.utils.data.distributed.DistributedSampler(activity_testset)
+    except:
+        test_sampler = None  # cpu
+    dataloader_activity = DataLoader(
+        activity_testset,
+        batch_size=args.batch_size_val // args.world_size,
+        num_workers=args.workers,
+        shuffle=False,
+        sampler=test_sampler,
+        drop_last=False,
+    )
+    return dataloader_activity, len(activity_testset)
+
+def dataloader_activity_train_grounding(args, tokenizer, subset="train"):
+    activity_grounding = ActivityNetDataset_Grounding(
+        subset=subset,
+        data_path=args.anno_path,
+        features_path=args.video_path,
+        max_words=args.max_words,
+        feature_framerate=args.video_framerate,
+        tokenizer=tokenizer,
+        max_frames=args.max_frames
+    )
+    train_sampler = torch.utils.data.distributed.DistributedSampler(activity_grounding)
+    dataloader_activity = DataLoader(
+        activity_grounding,
+        batch_size=args.batch_size_val // args.world_size,
+        num_workers=args.workers,
+        shuffle=(train_sampler is None),
+        sampler=train_sampler,
+        drop_last=True,
+    )
+    return dataloader_activity, len(activity_grounding), train_sampler
 
 def dataloader_msvd_train(args, tokenizer):
     msvd_dataset = MsvdDataset(
@@ -267,4 +312,5 @@ DATALOADER_DICT["msrvtt"] = {"train": dataloader_msrvtt_train, "val": dataloader
 DATALOADER_DICT["msvd"] = {"train":dataloader_msvd_train, "val":dataloader_msvd_test, "test":dataloader_msvd_test}
 DATALOADER_DICT["lsmdc"] = {"train":dataloader_lsmdc_train, "val":dataloader_lsmdc_test, "test":dataloader_lsmdc_test}
 DATALOADER_DICT["activity"] = {"train":dataloader_activity_train, "val":dataloader_activity_test, "test":None}
+DATALOADER_DICT["activity_grounding"] = {"train":dataloader_activity_train_grounding, "val":dataloader_activity_test_grounding, "test":None, "grounding": dataloader_activity_test_grounding}
 DATALOADER_DICT["didemo"] = {"train":dataloader_didemo_train, "val":None, "test":dataloader_didemo_test}
