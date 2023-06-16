@@ -1,9 +1,20 @@
-# DATA_PATH=[Your ActivityNet data and videos path]
-# apt-get install libsm6 libxext6
+mkdir data
+cd data
+echo "download data"
+hdfs dfs -get hdfs://haruna/home/byte_arnold_lq_mlnlc/user/chengxuxin/lhx/VL/data/anet.tar.gz
+tar -zxvf anet.tar.gz
+cd ..
+
+hdfs dfs -get hdfs://haruna/home/byte_arnold_lq_mlnlc/user/chengxuxin/lhx/VL/EMCL-Net/tvr/models/ViT-B-32.pt
+mv ViT-B-32.pt ./tvr/models
+
 export PYTHONWARNINGS='ignore:semaphore_tracker:UserWarning'
 split_hosts=$(echo $ARNOLD_WORKER_HOSTS | tr ":" "\n")
 split_hosts=($split_hosts)
 
+hdfs dfs -get hdfs://haruna/home/byte_arnold_lq_mlnlc/user/chengxuxin/lhx/VL/GTVR/outputs/activity/best.bin
+
+DATA_PATH=./data/anet
 CUDA_VISIBLE_DEVICES=0 \
 python3 -m torch.distributed.launch --nproc_per_node=1 \
 --master_addr ${split_hosts[0]} \
@@ -15,10 +26,10 @@ main_grounding.py \
 --epochs 5 \
 --lr 1e-4 \
 --coef_lr 1e-3 \
---batch_size 8 \
---batch_size_val 16 \
---anno_path /mnt/bd/cxx-dataset/CLIP4Clip/data/activitynet/anet \
---video_path /mnt/bd/cxx-dataset/CLIP4Clip/data/activitynet/anet/Activity_Videos \
+--batch_size 128 \
+--batch_size_val 128 \
+--anno_path ${DATA_PATH}/ \
+--video_path ${DATA_PATH}/Activity_Videos \
 --datatype activity_grounding \
 --max_words 64 \
 --max_frames 64 \
@@ -26,7 +37,7 @@ main_grounding.py \
 --output_dir outputs/activity \
 --embd_mode wti \
 --do_gauss 1 \
---init_model /mnt/bd/cxx-third/GTVR/best.bin
+--init_model best.bin
 
 # MSRVTT --do_train 1 \
 # CUDA_VISIBLE_DEVICES=0 \
