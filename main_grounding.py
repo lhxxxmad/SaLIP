@@ -384,7 +384,7 @@ def _run_on_single_gpu(model, t_mask_list, v_mask_list, t_feat_list, v_feat_list
                 v_feat = v_feat[:, : -1]
                 t_mask = t_mask[:, : -1]
                 v_mask = v_mask[:, : -1]
-            loss1, loss2 = model.get_moment_text_rec(t_feat, v_feat, t_mask, v_mask, props, text_weight)
+            loss1, loss2, _, _ = model.get_moment_text_rec(t_feat, v_feat, t_mask, v_mask, props, text_weight)
             grounding_loss = (loss1+loss2)/2
             grounding_loss = grounding_loss.mean(-1).mean(-1)
             idx = grounding_loss.view(bsz, model.num_props).argsort(dim=-1)
