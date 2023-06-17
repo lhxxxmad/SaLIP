@@ -594,7 +594,7 @@ def eval_epoch(args, model, test_dataloader, device):
     #         format(vt_metrics['R1'], vt_metrics['R5'], vt_metrics['R10'], vt_metrics['R50'], vt_metrics['MR'],
     #             vt_metrics['MeanR']))
 
-    return res
+    return res['IoU@0.5']
 
 
 def main():
