@@ -47,9 +47,10 @@ class ActivityNetDataset_Grounding(Dataset):
         video_id_path_dict["val"] = os.path.join(self.data_path, "val_ids.json")
 
         video_json_path_dict = {}
+        # video_json_path_dict["train"] = '/mnt/bd/cxx-third/MMN/dataset/ActivityNet/debug.json'
         video_json_path_dict["train"] = os.path.join(self.data_path, "train.json")
-        # video_json_path_dict["val"] = '/mnt/bd/cxx-third/MMN/dataset/ActivityNet/debug.json'
-        video_json_path_dict["val"] = os.path.join(self.data_path, "val_1.json")
+        video_json_path_dict["val"] = '/mnt/bd/cxx-third/MMN/dataset/ActivityNet/debug.json'
+        # video_json_path_dict["val"] = os.path.join(self.data_path, "val_1.json")
 
         pseudo_video_id_list, video_id_list = self._get_video_id_single(video_id_path_dict[self.subset])
         pseudo_caption_dict, annotations = self._get_captions_single(video_json_path_dict[self.subset])

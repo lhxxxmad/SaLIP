@@ -388,7 +388,8 @@ def _run_on_single_gpu(model, t_mask_list, v_mask_list, t_feat_list, v_feat_list
             grounding_loss = (loss1+loss2)/2
             grounding_loss = grounding_loss.mean(-1).mean(-1)
             idx = grounding_loss.view(bsz, model.num_props).argsort(dim=-1)
-            props = props.view(-1, 2)
+            # props = props.view(-1, 2)
+
             center, width = props[:, 0].view(bsz, model.num_props).gather(index=idx, dim=-1), props[:, 1].view(bsz, model.num_props).gather(index=idx, dim=-1)
             selected_prop = torch.stack([torch.clamp(center-width/2, min=0), 
                                     torch.clamp(center+width/2, max=1)], dim=-1)
@@ -535,7 +536,7 @@ def eval_epoch(args, model, test_dataloader, device):
     logger.info('[start] compute_metrics')
     res = top_1_metric(selected_props, batch_moment.cpu())
     logger.info(res)
-    pdb.set_trace()
+    # pdb.set_trace()
 
     # if multi_sentence_:
     #     logger.info("before reshape, sim matrix size: {} x {}".format(sim_matrix.shape[0], sim_matrix.shape[1]))

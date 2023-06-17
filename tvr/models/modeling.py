@@ -263,7 +263,7 @@ class SLIP(nn.Module):
             
     def get_moment_text_rec(self, text_feat, video_feat, text_mask, video_mask, props, text_weight):
         bsz, frame_len, T = video_feat.shape
-        props = torch.sigmoid(props).view(bsz*self.num_props, 2)
+        # props = props.view(bsz*self.num_props, 2)
         gauss_center = props[:, 0]
         gauss_width = props[:, 1]
 
@@ -496,7 +496,7 @@ class SLIP(nn.Module):
                 # text_weight = self.text_weight_fc(cross_text_feat).squeeze(2)  # B_t x N_t x D -> B_t x N_t
                 # text_weight =  self.text_saliency_fc(cross_text_feat[:,-1])
                 # video_weight =  self.video_saliency_fc(cross_video_feat[:,-1])
-                props = self.moment_fc(cross_video_feat[:,-1])
+                props = torch.sigmoid(self.moment_fc(cross_video_feat[:,-1])).view(-1, 2)
                 cross_video_feat = cross_video_feat[:, : -1]
                 cross_text_feat = cross_text_feat[:, : -1]
 
