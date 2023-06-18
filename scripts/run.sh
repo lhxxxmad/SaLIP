@@ -140,7 +140,7 @@ python3 -m torch.distributed.launch --nproc_per_node=1 \
 --master_addr ${split_hosts[0]} \
 --master_port ${split_hosts[1]} \
 main_grounding.py \
---do_eval 1 \
+--do_train 1 \
 --workers 0 \
 --n_display 50 \
 --epochs 5 \
@@ -157,7 +157,7 @@ main_grounding.py \
 --output_dir outputs/activity \
 --embd_mode wti \
 --do_gauss 1 \
---init_model /mnt/bd/cxx-third/GTVR/outputs/best/best.bin
+# --init_model /mnt/bd/cxx-third/GTVR/outputs/best/best.bin
 
 
 # LSMDC 

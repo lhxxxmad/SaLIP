@@ -288,16 +288,18 @@ class SLIP(nn.Module):
         pos_weight = gauss_weight/gauss_weight.max(dim=-1, keepdim=True)[0]
         mask_moment, masked_vec_video = self._mask_moment(video_feat, video_mask, gauss_center, gauss_width)
 
-        rec_text = self.rec_text_trans2(video_feat, None, masked_text, None, decoding=2, gauss_weight=pos_weight)[1]
-        rec_video = self.rec_video_trans2(text_feat, None, mask_moment, None,  decoding=2, gauss_weight=None)[1]
-        rec_ref = self.rec_video_trans2(text_feat, None, video_feat, None,  decoding=2, gauss_weight=None)[1]
+        rec_text = self.rec_text_trans2(video_feat, video_mask, masked_text, masked_vec_text, decoding=2, gauss_weight=pos_weight)[1]
+        rec_video = self.rec_video_trans2(text_feat, text_mask, mask_moment, masked_vec_video.squeeze(-1),  decoding=2, gauss_weight=None)[1]
+        rec_ref = self.rec_video_trans2(text_feat, text_mask, video_feat, video_mask,  decoding=2, gauss_weight=None)[1]
+       
 
         rec_text_loss = self.mse_loss(rec_text, text_feat)
         rec_video_loss = self.mse_loss(rec_video, video_feat)
         rec_ref_loss = self.mse_loss(rec_ref, video_feat)
-
-        rec_video_loss = rec_video_loss * masked_vec_video * pos_weight.unsqueeze(2)
+        
+        rec_video_loss = rec_video_loss * masked_vec_video #* pos_weight.unsqueeze(2)
         rec_text_loss = rec_text_loss * masked_vec_text.unsqueeze(-1) #* text_weight.unsqueeze(2)
+        rec_ref_loss = rec_ref_loss * video_mask.unsqueeze(-1)
         # pdb.set_trace()
         gauss_weight = gauss_weight.view(bsz, self.num_props, -1)
         gauss_weight = gauss_weight / gauss_weight.sum(dim=-1, keepdim=True)
@@ -310,6 +312,27 @@ class SLIP(nn.Module):
         ivc_loss = torch.max(rec_video_loss - rec_ref_loss + self.margin1, tmp_0)
 
         return rec_text_loss, rec_video_loss, div_loss, ivc_loss
+
+    def negative_proposal_mining(self, props_len, center, width, epoch):
+        def Gauss(pos, w1, c):
+            w1 = w1.unsqueeze(-1).clamp(1e-2) / (self.sigma/2)
+            c = c.unsqueeze(-1)
+            w = 0.3989422804014327
+            y1 = w/w1*torch.exp(-(pos-c)**2/(2*w1**2))
+            return y1/y1.max(dim=-1, keepdim=True)[0]
+
+        weight = torch.linspace(0, 1, props_len)
+        weight = weight.view(1, -1).expand(center.size(0), -1).to(center.device)
+
+        left_width = torch.clamp(center-width/2, min=0)
+        left_center = left_width * min(epoch/self.max_epoch, 1)**self.gamma * 0.5
+        right_width = torch.clamp(1-center-width/2, min=0)
+        right_center = 1 - right_width * min(epoch/self.max_epoch, 1)**self.gamma * 0.5
+
+        left_neg_weight = Gauss(weight, left_center, left_center)
+        right_neg_weight = Gauss(weight, 1-right_center, right_center)
+
+        return left_neg_weight, right_neg_weight
 
     def BCE_loss(self, logits, labels, mask):
         labels = labels.type_as(logits)

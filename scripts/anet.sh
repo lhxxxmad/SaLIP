@@ -72,3 +72,29 @@ main.py \
 --rec_trans_num_layers2 4 \
 --tmp_trans_num_layers 4 \
 --sal_predictor trans
+
+
+echo "test grounding"
+CUDA_VISIBLE_DEVICES=0,1,2,3,4,5,6,7 \
+python3 -m torch.distributed.launch --nproc_per_node=8 \
+--master_addr ${ARNOLD_WORKER_0_HOST} \
+--master_port ${ARNOLD_WORKER_0_PORT} \
+main_grounding.py \
+--do_eval 1 \
+--workers 8 \
+--n_display 50 \
+--epochs 5 \
+--lr 1e-4 \
+--coef_lr 1e-3 \
+--batch_size 128 \
+--batch_size_val 128 \
+--anno_path ${DATA_PATH}/ \
+--video_path ${DATA_PATH}/Activity_Videos \
+--datatype activity_grounding \
+--max_words 64 \
+--max_frames 64 \
+--video_framerate 1 \
+--output_dir outputs/activity \
+--embd_mode wti \
+--do_gauss 1 \
+--init_model outputs/activity/best.bin \
