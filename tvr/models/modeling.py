@@ -131,6 +131,7 @@ class SLIP(nn.Module):
         self.rec_loss_weight = config.rec_loss_weight
         self.ret_loss_weight = config.ret_loss_weight
         self.margin1 = 0.1
+        self.margin2 = 0.1
         self.lambda1 = 0.1
         self.alpha = 0.1
         self.trans = DualTransformer()
@@ -197,7 +198,7 @@ class SLIP(nn.Module):
         self.load_state_dict(new_state_dict, strict=False)  # only update new state (seqTransf/seqLSTM/tightTransf)
         ## <=== End of initialization trick
 
-    def forward(self, text_ids, text_mask, video, video_mask=None, idx=None, global_step=0):
+    def forward(self, text_ids, text_mask, video, video_mask=None, idx=None, epoch=0):
 
         text_ids = text_ids.view(-1, text_ids.shape[-1])
         text_mask = text_mask.view(-1, text_mask.shape[-1])
@@ -242,8 +243,8 @@ class SLIP(nn.Module):
             rec_video_loss, rec_text_loss = self.get_rec_loss(text_feat, video_feat, text_mask, video_mask, text_weight, video_weight)
             temporal_loss = self.get_temporal_order_loss(text_feat, video_feat, text_mask, video_mask, text_weight, video_weight)
             # moment-text rec
-            rec_mt, rec_tm, div_loss, ivc_loss = self.get_moment_text_rec(text_feat, video_feat, text_mask, video_mask, props, text_weight)
-            rec_mt, rec_tm, div_loss, ivc_loss = rec_mt.mean(), rec_tm.mean(), div_loss.mean(), ivc_loss.mean()
+            rec_mt, rec_tm, div_loss, ivc_loss, rec_ref_loss, rec_neg1_loss, rec_neg2_loss = self.get_moment_text_rec(text_feat, video_feat, text_mask, video_mask, props, text_weight, epoch)
+            rec_mt, rec_tm, div_loss, ivc_loss, rec_ref_loss, rec_neg1_loss, rec_neg2_loss = rec_mt.mean(), rec_tm.mean(), div_loss.mean(), ivc_loss.mean(), rec_ref_loss.mean(), rec_neg1_loss.mean(), rec_neg2_loss.mean()
             # final_loss = self.ret_loss_weight * retrieval_loss + self.rec_loss_weight * (rec_video_loss + rec_text_loss)/2.0 + self.temp_loss_weight * temporal_loss
             final_loss = self.ret_loss_weight * retrieval_loss + self.rec_loss_weight * (rec_video_loss + rec_text_loss)/2.0 + (rec_mt + rec_tm)/2.0 + div_loss + ivc_loss
             final_loss_dict = {'final_loss': final_loss.item(), 
@@ -253,7 +254,10 @@ class SLIP(nn.Module):
                                 'rec_mt_loss': rec_mt.item(),
                                 'rec_tm_loss':rec_tm.item(),
                                 'div_loss': div_loss.item(),
-                                'ivc_loss': ivc_loss.item()
+                                'ivc_loss': ivc_loss.item(),
+                                'rec_ref_loss':rec_ref_loss.item(),
+                                'rec_neg1_loss':rec_neg1_loss.item(),
+                                'rec_neg2_loss':rec_neg2_loss.item(),
                                 # 'temporal_loss': self.temp_loss_weight * temporal_loss.item()
                                 }
             
@@ -261,7 +265,7 @@ class SLIP(nn.Module):
         else:
             return None
             
-    def get_moment_text_rec(self, text_feat, video_feat, text_mask, video_mask, props, text_weight):
+    def get_moment_text_rec(self, text_feat, video_feat, text_mask, video_mask, props, text_weight, epoch):
         bsz, frame_len, T = video_feat.shape
         # props = props.view(bsz*self.num_props, 2)
         gauss_center = props[:, 0]
@@ -288,30 +292,40 @@ class SLIP(nn.Module):
         pos_weight = gauss_weight/gauss_weight.max(dim=-1, keepdim=True)[0]
         mask_moment, masked_vec_video = self._mask_moment(video_feat, video_mask, gauss_center, gauss_width)
 
-        rec_text = self.rec_text_trans2(video_feat, video_mask, masked_text, masked_vec_text, decoding=2, gauss_weight=pos_weight)[1]
-        rec_video = self.rec_video_trans2(text_feat, text_mask, mask_moment, masked_vec_video.squeeze(-1),  decoding=2, gauss_weight=None)[1]
-        rec_ref = self.rec_video_trans2(text_feat, text_mask, video_feat, video_mask,  decoding=2, gauss_weight=None)[1]
+        rec_text = self.rec_text_trans2(video_feat, None, masked_text, None, decoding=2, gauss_weight=pos_weight)[1]
+        rec_video = self.rec_video_trans2(text_feat, None, mask_moment, None,  decoding=2, gauss_weight=None)[1]
+        rec_ref = self.rec_video_trans2(text_feat, None, video_feat, None,  decoding=2, gauss_weight=None)[1]
        
+        # negative
+        neg_1_weight, neg_2_weight = self.negative_proposal_mining(self.config.max_frames, gauss_center, gauss_width, epoch)
+        rec_neg1 = self.rec_video_trans2(text_feat, None, video_feat, None,  decoding=2, gauss_weight=neg_1_weight)[1]
+        rec_neg2 = self.rec_video_trans2(text_feat, None, video_feat, None,  decoding=2, gauss_weight=neg_2_weight)[1]
 
         rec_text_loss = self.mse_loss(rec_text, text_feat)
         rec_video_loss = self.mse_loss(rec_video, video_feat)
         rec_ref_loss = self.mse_loss(rec_ref, video_feat)
+        rec_neg1_loss = self.mse_loss(rec_neg1, video_feat)
+        rec_neg2_loss = self.mse_loss(rec_neg2, video_feat)
         
         rec_video_loss = rec_video_loss * masked_vec_video #* pos_weight.unsqueeze(2)
         rec_text_loss = rec_text_loss * masked_vec_text.unsqueeze(-1) #* text_weight.unsqueeze(2)
         rec_ref_loss = rec_ref_loss * video_mask.unsqueeze(-1)
         # pdb.set_trace()
+        # div loss
         gauss_weight = gauss_weight.view(bsz, self.num_props, -1)
         gauss_weight = gauss_weight / gauss_weight.sum(dim=-1, keepdim=True)
         target = torch.eye(self.num_props).unsqueeze(0).cuda() * self.lambda1
         source = torch.matmul(gauss_weight, gauss_weight.transpose(1, 2))
         div_loss = torch.norm(target - source, dim=(1, 2))**2
 
+        # ivc loss
         tmp_0 = torch.zeros_like(rec_video_loss).cuda()
         tmp_0.requires_grad = False
-        ivc_loss = torch.max(rec_video_loss - rec_ref_loss + self.margin1, tmp_0)
+        ivc_loss = torch.max(rec_video_loss - rec_ref_loss + self.margin1, tmp_0) \
+                    + torch.max(rec_video_loss - rec_neg1_loss + self.margin2, tmp_0) \
+                    + torch.max(rec_video_loss - rec_neg2_loss + self.margin2, tmp_0)
 
-        return rec_text_loss, rec_video_loss, div_loss, ivc_loss
+        return rec_text_loss, rec_video_loss, div_loss, ivc_loss, rec_ref_loss, rec_neg1_loss, rec_neg2_loss
 
     def negative_proposal_mining(self, props_len, center, width, epoch):
         def Gauss(pos, w1, c):
