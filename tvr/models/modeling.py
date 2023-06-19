@@ -294,11 +294,11 @@ class SLIP(nn.Module):
         rec_text = self.rec_text_trans2(video_feat, None, masked_text, None, decoding=2, gauss_weight=pos_weight)[1]
         rec_video = self.rec_video_trans2(text_feat, None, mask_moment, None,  decoding=2, gauss_weight=None)[1]
         rec_ref = self.rec_video_trans2(text_feat, None, video_feat, None,  decoding=2, gauss_weight=None)[1]
-       
+
         # negative
         neg_1_weight, neg_2_weight = self.negative_proposal_mining(self.config.max_frames, gauss_center, gauss_width, epoch)
-        rec_neg1 = self.rec_video_trans2(text_feat, None, video_feat, None,  decoding=2, gauss_weight=neg_1_weight)[1]
-        rec_neg2 = self.rec_video_trans2(text_feat, None, video_feat, None,  decoding=2, gauss_weight=neg_2_weight)[1]
+        rec_neg1 = self.rec_video_trans2(video_feat, None, masked_text, None,  decoding=2, gauss_weight=neg_1_weight)[1]
+        rec_neg2 = self.rec_video_trans2(video_feat, None, masked_text, None,  decoding=2, gauss_weight=neg_2_weight)[1]
 
         rec_text_loss = self.mse_loss(rec_text, text_feat)
         rec_video_loss = self.mse_loss(rec_video, video_feat)
