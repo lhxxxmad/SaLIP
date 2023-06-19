@@ -293,22 +293,22 @@ class SLIP(nn.Module):
 
         rec_text = self.rec_text_trans2(video_feat, None, masked_text, None, decoding=2, gauss_weight=pos_weight)[1]
         rec_video = self.rec_video_trans2(text_feat, None, mask_moment, None,  decoding=2, gauss_weight=None)[1]
-        rec_ref = self.rec_video_trans2(text_feat, None, video_feat, None,  decoding=2, gauss_weight=None)[1]
+        rec_ref = self.rec_video_trans2(video_feat, None, masked_text, None,  decoding=2, gauss_weight=None)[1]
 
         # negative
         neg_1_weight, neg_2_weight = self.negative_proposal_mining(self.config.max_frames, gauss_center, gauss_width, epoch)
         rec_neg1 = self.rec_video_trans2(video_feat, None, masked_text, None,  decoding=2, gauss_weight=neg_1_weight)[1]
         rec_neg2 = self.rec_video_trans2(video_feat, None, masked_text, None,  decoding=2, gauss_weight=neg_2_weight)[1]
 
-        rec_text_loss = self.mse_loss(rec_text, text_feat)
-        rec_video_loss = self.mse_loss(rec_video, video_feat)
-        rec_ref_loss = self.mse_loss(rec_ref, video_feat)
-        rec_neg1_loss = self.mse_loss(rec_neg1, video_feat)
-        rec_neg2_loss = self.mse_loss(rec_neg2, video_feat)
-        
-        rec_video_loss = rec_video_loss * masked_vec_video #* pos_weight.unsqueeze(2)
-        rec_text_loss = rec_text_loss * masked_vec_text.unsqueeze(-1) #* text_weight.unsqueeze(2)
-        rec_ref_loss = rec_ref_loss * video_mask.unsqueeze(-1)
+        rec_text_loss = self.mse_loss(rec_text, text_feat) * masked_vec_text.unsqueeze(-1) #* text_weight.unsqueeze(2)
+        rec_video_loss = self.mse_loss(rec_video, video_feat) * masked_vec_video #* pos_weight.unsqueeze(2)
+        rec_ref_loss = self.mse_loss(rec_ref, text_feat) * masked_vec_text.unsqueeze(-1) #* text_weight.unsqueeze(2)
+        rec_neg1_loss = self.mse_loss(rec_neg1, text_feat) * masked_vec_text.unsqueeze(-1) #* text_weight.unsqueeze(2)
+        rec_neg2_loss = self.mse_loss(rec_neg2, text_feat) * masked_vec_text.unsqueeze(-1) #* text_weight.unsqueeze(2)
+        # pdb.set_trace()
+        # rec_video_loss = rec_video_loss * masked_vec_video #* pos_weight.unsqueeze(2)
+        # rec_text_loss = rec_text_loss * masked_vec_text.unsqueeze(-1) #* text_weight.unsqueeze(2)
+        # rec_ref_loss = rec_ref_loss * video_mask.unsqueeze(-1)
         # pdb.set_trace()
         # div loss
         gauss_weight = gauss_weight.view(bsz, self.num_props, -1)
@@ -318,11 +318,12 @@ class SLIP(nn.Module):
         div_loss = torch.norm(target - source, dim=(1, 2))**2
 
         # ivc loss
-        tmp_0 = torch.zeros_like(rec_video_loss).cuda()
+        # pdb.set_trace()
+        tmp_0 = torch.zeros_like(rec_text_loss).cuda()
         tmp_0.requires_grad = False
-        ivc_loss = torch.max(rec_video_loss - rec_ref_loss + self.margin1, tmp_0) \
-                    + torch.max(rec_video_loss - rec_neg1_loss + self.margin2, tmp_0) \
-                    + torch.max(rec_video_loss - rec_neg2_loss + self.margin2, tmp_0)
+        ivc_loss = torch.max(rec_text_loss - rec_ref_loss + self.margin1, tmp_0) \
+                    + torch.max(rec_text_loss - rec_neg1_loss + self.margin2, tmp_0) \
+                    + torch.max(rec_text_loss - rec_neg2_loss + self.margin2, tmp_0)
 
         return rec_text_loss, rec_video_loss, div_loss, ivc_loss, rec_ref_loss, rec_neg1_loss, rec_neg2_loss
 
