@@ -199,7 +199,6 @@ class SLIP(nn.Module):
         ## <=== End of initialization trick
 
     def forward(self, text_ids, text_mask, video, video_mask=None, idx=None, epoch=0):
-
         text_ids = text_ids.view(-1, text_ids.shape[-1])
         text_mask = text_mask.view(-1, text_mask.shape[-1])
         video_mask = video_mask.view(-1, video_mask.shape[-1])
