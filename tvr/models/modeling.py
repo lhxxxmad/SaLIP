@@ -242,7 +242,7 @@ class SLIP(nn.Module):
             rec_video_loss, rec_text_loss = self.get_rec_loss(text_feat, video_feat, text_mask, video_mask, text_weight, video_weight)
             temporal_loss = self.get_temporal_order_loss(text_feat, video_feat, text_mask, video_mask, text_weight, video_weight)
             # moment-text rec
-            rec_mt, rec_tm, div_loss, ivc_loss, rec_ref_loss, rec_neg1_loss, rec_neg2_loss = self.get_moment_text_rec(text_feat, video_feat, text_mask, video_mask, props, text_weight, epoch)
+            rec_mt, rec_tm, div_loss, ivc_loss, rec_ref_loss, rec_neg1_loss, rec_neg2_loss, _ = self.get_moment_text_rec(text_feat, video_feat, text_mask, video_mask, props, text_weight, epoch)
             rec_mt, rec_tm, div_loss, ivc_loss, rec_ref_loss, rec_neg1_loss, rec_neg2_loss = rec_mt.mean(), rec_tm.mean(), div_loss.mean(), ivc_loss.mean(), rec_ref_loss.mean(), rec_neg1_loss.mean(), rec_neg2_loss.mean()
             # final_loss = self.ret_loss_weight * retrieval_loss + self.rec_loss_weight * (rec_video_loss + rec_text_loss)/2.0 + self.temp_loss_weight * temporal_loss
             final_loss = self.ret_loss_weight * retrieval_loss + self.rec_loss_weight * (rec_video_loss + rec_text_loss)/2.0 + (rec_mt + rec_tm)/2.0 + div_loss + ivc_loss
@@ -294,17 +294,26 @@ class SLIP(nn.Module):
         rec_text = self.rec_text_trans2(video_feat, None, masked_text, None, decoding=2, gauss_weight=pos_weight)[1]
         rec_video = self.rec_video_trans2(text_feat, None, mask_moment, None,  decoding=2, gauss_weight=None)[1]
         rec_ref = self.rec_video_trans2(video_feat, None, masked_text, None,  decoding=2, gauss_weight=None)[1]
-
+        # pdb.set_trace()
         # negative
         neg_1_weight, neg_2_weight = self.negative_proposal_mining(self.config.max_frames, gauss_center, gauss_width, epoch)
         rec_neg1 = self.rec_video_trans2(video_feat, None, masked_text, None,  decoding=2, gauss_weight=neg_1_weight)[1]
         rec_neg2 = self.rec_video_trans2(video_feat, None, masked_text, None,  decoding=2, gauss_weight=neg_2_weight)[1]
 
         rec_text_loss = self.mse_loss(rec_text, text_feat) * masked_vec_text.unsqueeze(-1) #* text_weight.unsqueeze(2)
+        rec_text_loss, idx = rec_text_loss.mean(-1).mean(-1).view(bsz, self.num_props).min(-1)
+
         rec_video_loss = self.mse_loss(rec_video, video_feat) * masked_vec_video #* pos_weight.unsqueeze(2)
+        rec_video_loss = torch.gather(rec_video_loss.mean(-1).mean(-1).view(bsz, self.num_props), index=idx.unsqueeze(-1), dim=-1).squeeze(-1)
+
         rec_ref_loss = self.mse_loss(rec_ref, text_feat) * masked_vec_text.unsqueeze(-1) #* text_weight.unsqueeze(2)
+        rec_ref_loss = torch.gather(rec_ref_loss.mean(-1).mean(-1).view(bsz, self.num_props), index=idx.unsqueeze(-1), dim=-1).squeeze(-1)
+
         rec_neg1_loss = self.mse_loss(rec_neg1, text_feat) * masked_vec_text.unsqueeze(-1) #* text_weight.unsqueeze(2)
+        rec_neg1_loss = torch.gather(rec_neg1_loss.mean(-1).mean(-1).view(bsz, self.num_props), index=idx.unsqueeze(-1), dim=-1).squeeze(-1)
+
         rec_neg2_loss = self.mse_loss(rec_neg2, text_feat) * masked_vec_text.unsqueeze(-1) #* text_weight.unsqueeze(2)
+        rec_neg2_loss = torch.gather(rec_neg2_loss.mean(-1).mean(-1).view(bsz, self.num_props), index=idx.unsqueeze(-1), dim=-1).squeeze(-1)
         # pdb.set_trace()
         # rec_video_loss = rec_video_loss * masked_vec_video #* pos_weight.unsqueeze(2)
         # rec_text_loss = rec_text_loss * masked_vec_text.unsqueeze(-1) #* text_weight.unsqueeze(2)
@@ -325,7 +334,7 @@ class SLIP(nn.Module):
                     + torch.max(rec_text_loss - rec_neg1_loss + self.margin2, tmp_0) \
                     + torch.max(rec_text_loss - rec_neg2_loss + self.margin2, tmp_0)
 
-        return rec_text_loss, rec_video_loss, div_loss, ivc_loss, rec_ref_loss, rec_neg1_loss, rec_neg2_loss
+        return rec_text_loss, rec_video_loss, div_loss, ivc_loss, rec_ref_loss, rec_neg1_loss, rec_neg2_loss, idx
 
     def negative_proposal_mining(self, props_len, center, width, epoch):
         def Gauss(pos, w1, c):
