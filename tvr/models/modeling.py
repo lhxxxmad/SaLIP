@@ -264,7 +264,7 @@ class SLIP(nn.Module):
         else:
             return None
             
-    def get_moment_text_rec(self, text_feat, video_feat, text_mask, video_mask, props, text_weight, epoch):
+    def get_moment_text_rec(self, text_feat, video_feat, text_mask, video_mask, props, text_weight, epoch=1):
         bsz, frame_len, T = video_feat.shape
         # props = props.view(bsz*self.num_props, 2)
         gauss_center = props[:, 0]
