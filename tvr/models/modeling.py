@@ -302,18 +302,19 @@ class SLIP(nn.Module):
 
         rec_text_loss = self.mse_loss(rec_text, text_feat) * masked_vec_text.unsqueeze(-1) #* text_weight.unsqueeze(2)
         rec_text_loss, idx = rec_text_loss.mean(-1).mean(-1).view(bsz, self.num_props).min(-1)
+        idx = idx.unsqueeze(-1)
 
         rec_video_loss = self.mse_loss(rec_video, video_feat) * masked_vec_video #* pos_weight.unsqueeze(2)
-        rec_video_loss = torch.gather(rec_video_loss.mean(-1).mean(-1).view(bsz, self.num_props), index=idx.unsqueeze(-1), dim=-1).squeeze(-1)
+        rec_video_loss = torch.gather(rec_video_loss.mean(-1).mean(-1).view(bsz, self.num_props), index=idx, dim=-1).squeeze(-1)
 
         rec_ref_loss = self.mse_loss(rec_ref, text_feat) * masked_vec_text.unsqueeze(-1) #* text_weight.unsqueeze(2)
-        rec_ref_loss = torch.gather(rec_ref_loss.mean(-1).mean(-1).view(bsz, self.num_props), index=idx.unsqueeze(-1), dim=-1).squeeze(-1)
+        rec_ref_loss = torch.gather(rec_ref_loss.mean(-1).mean(-1).view(bsz, self.num_props), index=idx, dim=-1).squeeze(-1)
 
         rec_neg1_loss = self.mse_loss(rec_neg1, text_feat) * masked_vec_text.unsqueeze(-1) #* text_weight.unsqueeze(2)
-        rec_neg1_loss = torch.gather(rec_neg1_loss.mean(-1).mean(-1).view(bsz, self.num_props), index=idx.unsqueeze(-1), dim=-1).squeeze(-1)
+        rec_neg1_loss = torch.gather(rec_neg1_loss.mean(-1).mean(-1).view(bsz, self.num_props), index=idx, dim=-1).squeeze(-1)
 
         rec_neg2_loss = self.mse_loss(rec_neg2, text_feat) * masked_vec_text.unsqueeze(-1) #* text_weight.unsqueeze(2)
-        rec_neg2_loss = torch.gather(rec_neg2_loss.mean(-1).mean(-1).view(bsz, self.num_props), index=idx.unsqueeze(-1), dim=-1).squeeze(-1)
+        rec_neg2_loss = torch.gather(rec_neg2_loss.mean(-1).mean(-1).view(bsz, self.num_props), index=idx, dim=-1).squeeze(-1)
         # pdb.set_trace()
         # rec_video_loss = rec_video_loss * masked_vec_video #* pos_weight.unsqueeze(2)
         # rec_text_loss = rec_text_loss * masked_vec_text.unsqueeze(-1) #* text_weight.unsqueeze(2)

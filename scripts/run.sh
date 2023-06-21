@@ -140,7 +140,7 @@ main.py \
 # --master_addr ${split_hosts[0]} \
 # --master_port ${split_hosts[1]} \
 # main_grounding.py \
-# --do_train 1 \
+# --do_eval 1 \
 # --workers 0 \
 # --n_display 50 \
 # --epochs 5 \
