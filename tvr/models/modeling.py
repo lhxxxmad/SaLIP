@@ -251,7 +251,7 @@ class SLIP(nn.Module):
                                 'retrieval_loss': self.ret_loss_weight * retrieval_loss.item(), 
                                 'rec_video_loss': self.rec_loss_weight * rec_video_loss.item(), 
                                 'rec_text_loss': self.rec_loss_weight * rec_text_loss.item(),
-                                'rec_tm_loss': self.lambda1 * rec_tm.item(),
+                                'rec_tm_loss': (self.lambda1 * rec_tm).item(),
                                 'div_loss': div_loss.item(),
                                 'ivc_loss': ivc_loss.item(),
                                 'rec_mt_loss': rec_mt.item(),
