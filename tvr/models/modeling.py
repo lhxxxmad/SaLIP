@@ -130,10 +130,10 @@ class SLIP(nn.Module):
         self.temp_loss_weight = config.temp_loss_weight
         self.rec_loss_weight = config.rec_loss_weight
         self.ret_loss_weight = config.ret_loss_weight
-        self.margin1 = 0.1
-        self.margin2 = 0.1
+        self.margin1 = 0.0
+        self.margin2 = 0.0
         self.lambda1 = 0.1
-        self.alpha = 0.1
+        self.alpha = 0.0
         self.trans = DualTransformer()
         ## ===> end of generate Gaussian masks
 
@@ -245,15 +245,16 @@ class SLIP(nn.Module):
             rec_mt, rec_tm, div_loss, ivc_loss, rec_ref_loss, rec_neg1_loss, rec_neg2_loss, _ = self.get_moment_text_rec(text_feat, video_feat, text_mask, video_mask, props, text_weight, epoch)
             rec_mt, rec_tm, div_loss, ivc_loss, rec_ref_loss, rec_neg1_loss, rec_neg2_loss = rec_mt.mean(), rec_tm.mean(), div_loss.mean(), ivc_loss.mean(), rec_ref_loss.mean(), rec_neg1_loss.mean(), rec_neg2_loss.mean()
             # final_loss = self.ret_loss_weight * retrieval_loss + self.rec_loss_weight * (rec_video_loss + rec_text_loss)/2.0 + self.temp_loss_weight * temporal_loss
-            final_loss = self.ret_loss_weight * retrieval_loss + self.rec_loss_weight * (rec_video_loss + rec_text_loss)/2.0 + (rec_mt + rec_tm)/2.0 + div_loss + ivc_loss
+            final_loss = self.ret_loss_weight * retrieval_loss + self.rec_loss_weight * (rec_video_loss + rec_text_loss)/2.0 + div_loss + ivc_loss + rec_mt + rec_mt * self.lambda1 #( + rec_tm)/2.0
+            # pdb.set_trace()
             final_loss_dict = {'final_loss': final_loss.item(), 
                                 'retrieval_loss': self.ret_loss_weight * retrieval_loss.item(), 
                                 'rec_video_loss': self.rec_loss_weight * rec_video_loss.item(), 
                                 'rec_text_loss': self.rec_loss_weight * rec_text_loss.item(),
-                                'rec_mt_loss': rec_mt.item(),
-                                'rec_tm_loss':rec_tm.item(),
+                                'rec_tm_loss': self.lambda1 * rec_tm.item(),
                                 'div_loss': div_loss.item(),
                                 'ivc_loss': ivc_loss.item(),
+                                'rec_mt_loss': rec_mt.item(),
                                 'rec_ref_loss':rec_ref_loss.item(),
                                 'rec_neg1_loss':rec_neg1_loss.item(),
                                 'rec_neg2_loss':rec_neg2_loss.item(),
@@ -323,7 +324,7 @@ class SLIP(nn.Module):
         # div loss
         gauss_weight = gauss_weight.view(bsz, self.num_props, -1)
         gauss_weight = gauss_weight / gauss_weight.sum(dim=-1, keepdim=True)
-        target = torch.eye(self.num_props).unsqueeze(0).cuda() * self.lambda1
+        target = torch.eye(self.num_props).unsqueeze(0).cuda() #* self.lambda1
         source = torch.matmul(gauss_weight, gauss_weight.transpose(1, 2))
         div_loss = torch.norm(target - source, dim=(1, 2))**2
 
@@ -574,7 +575,6 @@ class SLIP(nn.Module):
             video_weight = torch.softmax(video_weight, dim=-1)  # B_v x N_v
             # video_weight = torch.sigmoid(video_weight)  # B_v x N_v
             # ################################################################
-            
             text_feat = text_feat / text_feat.norm(dim=-1, keepdim=True)
             video_feat = video_feat / video_feat.norm(dim=-1, keepdim=True)
 
@@ -624,6 +624,47 @@ class SLIP(nn.Module):
         return retrieve_logits, retrieve_logits.T, text_weight, video_weight, props
         # return retrieve_logits, retrieve_logits.T, props
 
+    def RelaxedWordMoverSimilarity(self, x1, mask1, x2, mask2):
+        """Compute relaxed word mover similarity
+
+        :param x1: ((batch, seq_len1, hidden_dim), (batch, seq_len1)), torch.float
+        :param x2: ((batch, seq_len2, hidden_dim), (batch, seq_len2)), torch.float
+        :return: (batch)
+        """
+
+        def masked_sum(x, mask, dim):
+            """Sum (masked version)
+
+            :param x: Input
+            :param mask: Mask Could be broadcastable
+            :param dim:
+            :return: Result of sum
+            """
+            return torch.sum(torch.where(mask, x, torch.zeros_like(x)), dim=dim)
+
+        def masked_mean(x, mask, dim):
+            """Mean (masked version)
+
+            :param x: Input
+            :param mask: Mask Could be broadcastable
+            :param dim:
+            :return: Result of mean
+            """
+            return masked_sum(x, mask, dim) / torch.count_nonzero(mask, dim=dim)
+        cos = nn.CosineSimilarity(dim=-1)
+
+        # (x1, mask1), (x2, mask2) = x1, x2
+        sim = cos(x1[:, :, None, :], x2[:, None, :, :])
+        inf = torch.tensor(float("-inf"), device=sim.device)
+        sim = torch.where(mask1.unsqueeze(-1), sim, inf)
+        sim = torch.where(mask2.unsqueeze(-2), sim, inf)
+        # (batch, seq_len1, seq_len2)
+        sim1, sim2 = torch.max(sim, dim=2)[0], torch.max(sim, dim=1)[0]
+        sim1 = masked_mean(sim1, mask1, dim=1)
+        sim2 = masked_mean(sim2, mask2, dim=1)
+        sim = (sim1 + sim2) / 2
+        return sim
+
     def _mean_pooling_for_similarity_visual(self, video_feat, video_mask,):
         video_mask_un = video_mask.to(dtype=torch.float).unsqueeze(-1)
         video_feat = video_feat * video_mask_un
@@ -631,6 +672,7 @@ class SLIP(nn.Module):
         video_mask_un_sum[video_mask_un_sum == 0.] = 1.
         video_out = torch.sum(video_feat, dim=1) / video_mask_un_sum
         return video_out
+
     def _mean_pooling_for_similarity_sequence(self, text_feat, text_mask):
         text_mask_un = text_mask.to(dtype=torch.float).unsqueeze(-1)
         text_mask_un[:, 0, :] = 0.
