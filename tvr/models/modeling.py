@@ -130,8 +130,8 @@ class SLIP(nn.Module):
         self.temp_loss_weight = config.temp_loss_weight
         self.rec_loss_weight = config.rec_loss_weight
         self.ret_loss_weight = config.ret_loss_weight
-        self.margin1 = 0.0
-        self.margin2 = 0.0
+        self.margin1 = 0.01
+        self.margin2 = 0.01
         self.lambda1 = 0.1
         self.alpha = 0.0
         self.trans = DualTransformer()
@@ -324,7 +324,7 @@ class SLIP(nn.Module):
         # div loss
         gauss_weight = gauss_weight.view(bsz, self.num_props, -1)
         gauss_weight = gauss_weight / gauss_weight.sum(dim=-1, keepdim=True)
-        target = torch.eye(self.num_props).unsqueeze(0).cuda() #* self.lambda1
+        target = torch.eye(self.num_props).unsqueeze(0).cuda() * self.lambda1
         source = torch.matmul(gauss_weight, gauss_weight.transpose(1, 2))
         div_loss = torch.norm(target - source, dim=(1, 2))**2
 
