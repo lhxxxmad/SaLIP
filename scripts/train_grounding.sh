@@ -17,8 +17,8 @@ split_hosts=($split_hosts)
 DATA_PATH=./data/anet
 CUDA_VISIBLE_DEVICES=0 \
 python3 -m torch.distributed.launch --nproc_per_node=1 \
---master_addr ${split_hosts[0]} \
---master_port ${split_hosts[1]} \
+--master_addr ${ARNOLD_WORKER_0_HOST} \
+--master_port ${ARNOLD_WORKER_0_PORT} \
 main_grounding.py \
 --do_train 1 \
 --workers 8 \
@@ -41,8 +41,8 @@ main_grounding.py \
 DATA_PATH=./data/anet
 CUDA_VISIBLE_DEVICES=0 \
 python3 -m torch.distributed.launch --nproc_per_node=1 \
---master_addr ${split_hosts[0]} \
---master_port ${split_hosts[1]} \
+--master_addr ${ARNOLD_WORKER_0_HOST} \
+--master_port ${ARNOLD_WORKER_0_PORT} \
 main_grounding.py \
 --do_eval 1 \
 --workers 8 \
