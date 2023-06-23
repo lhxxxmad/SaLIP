@@ -324,7 +324,7 @@ class SLIP(nn.Module):
         # div loss
         gauss_weight = gauss_weight.view(bsz, self.num_props, -1)
         gauss_weight = gauss_weight / gauss_weight.sum(dim=-1, keepdim=True)
-        target = torch.eye(self.num_props).unsqueeze(0).cuda() * self.lambda1
+        target = torch.eye(self.num_props).unsqueeze(0).cuda() #* self.lambda1
         source = torch.matmul(gauss_weight, gauss_weight.transpose(1, 2))
         div_loss = torch.norm(target - source, dim=(1, 2))**2
 
