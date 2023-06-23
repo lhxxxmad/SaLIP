@@ -26,8 +26,8 @@ main_grounding.py \
 --epochs 5 \
 --lr 1e-4 \
 --coef_lr 1e-3 \
---batch_size 32 \
---batch_size_val 32 \
+--batch_size 128 \
+--batch_size_val 128 \
 --anno_path ${DATA_PATH}/ \
 --video_path ${DATA_PATH}/Activity_Videos \
 --datatype activity_grounding \
