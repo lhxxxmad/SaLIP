@@ -28,7 +28,7 @@ main.py \
 --batch_size_val 128 \
 --anno_path ${DATA_PATH}/ \
 --video_path ${DATA_PATH}/LSMDC_Videos \
---datatype activity \
+--datatype lsmdc \
 --max_words 32 \
 --max_frames 12 \
 --video_framerate 1 \
@@ -57,8 +57,8 @@ main.py \
 --batch_size 128 \
 --batch_size_val 128 \
 --anno_path ${DATA_PATH}/ \
---video_path ${DATA_PATH}/Activity_Videos \
---datatype activity \
+--video_path ${DATA_PATH}/LSMDC_Videos \
+--datatype lsmdc \
 --max_words 64 \
 --max_frames 64 \
 --video_framerate 1 \
