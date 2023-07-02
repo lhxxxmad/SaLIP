@@ -59,8 +59,8 @@ main.py \
 --anno_path ${DATA_PATH}/ \
 --video_path ${DATA_PATH}/LSMDC_Videos \
 --datatype lsmdc \
---max_words 64 \
---max_frames 64 \
+--max_words 32 \
+--max_frames 12 \
 --video_framerate 1 \
 --init_model outputs/lsmdc/best.bin \
 --output_dir outputs/lsmdc \
