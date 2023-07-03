@@ -35,8 +35,8 @@ main.py \
 --output_dir outputs/lsmdc \
 --embd_mode wti \
 --do_gauss 1 \
---video_mask_rate 0.1 \
---text_mask_rate 0.1 \
+--video_mask_rate 0.7 \
+--text_mask_rate 0.7 \
 --rec_trans_num_layers1 4 \
 --rec_trans_num_layers2 4 \
 --sal_predictor ca+mlp \
@@ -66,8 +66,8 @@ main.py \
 --output_dir outputs/lsmdc \
 --embd_mode wti \
 --do_gauss 1 \
---video_mask_rate 0.1 \
---text_mask_rate 0.1 \
+--video_mask_rate 0.7 \
+--text_mask_rate 0.7 \
 --rec_trans_num_layers1 4 \
 --rec_trans_num_layers2 4 \
 --sal_predictor ca+mlp \
