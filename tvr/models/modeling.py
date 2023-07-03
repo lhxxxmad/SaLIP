@@ -245,7 +245,7 @@ class SLIP(nn.Module):
             rec_mt, rec_tm, div_loss, ivc_loss, rec_ref_loss, rec_neg1_loss, rec_neg2_loss, _ = self.get_moment_text_rec(text_feat, video_feat, text_mask, video_mask, props, text_weight, epoch)
             rec_mt, rec_tm, div_loss, ivc_loss, rec_ref_loss, rec_neg1_loss, rec_neg2_loss = rec_mt.mean(), rec_tm.mean(), div_loss.mean(), ivc_loss.mean(), rec_ref_loss.mean(), rec_neg1_loss.mean(), rec_neg2_loss.mean()
             # final_loss = self.ret_loss_weight * retrieval_loss + self.rec_loss_weight * (rec_video_loss + rec_text_loss)/2.0 + self.temp_loss_weight * temporal_loss
-            final_loss = self.ret_loss_weight * retrieval_loss + self.rec_loss_weight * (rec_video_loss + rec_text_loss)/2.0 + div_loss + ivc_loss + rec_mt + rec_mt * self.lambda1 #( + rec_tm)/2.0
+            final_loss = self.ret_loss_weight * retrieval_loss + self.rec_loss_weight * (rec_video_loss + rec_text_loss)/2.0 + div_loss + ivc_loss*0 + rec_mt + rec_mt * self.lambda1 #( + rec_tm)/2.0
             # pdb.set_trace()
             final_loss_dict = {'final_loss': final_loss.item(), 
                                 'retrieval_loss': self.ret_loss_weight * retrieval_loss.item(), 
@@ -253,7 +253,7 @@ class SLIP(nn.Module):
                                 'rec_text_loss': self.rec_loss_weight * rec_text_loss.item(),
                                 'rec_tm_loss': (self.lambda1 * rec_tm).item(),
                                 'div_loss': div_loss.item(),
-                                'ivc_loss': ivc_loss.item(),
+                                'ivc_loss': ivc_loss.item()*0,
                                 'rec_mt_loss': rec_mt.item(),
                                 'rec_ref_loss':rec_ref_loss.item(),
                                 'rec_neg1_loss':rec_neg1_loss.item(),
@@ -857,8 +857,8 @@ class SLIP(nn.Module):
         
         logit_scale = self.clip.logit_scale.exp()
 
-        t2v_logits = self.get_marginal_loss(t2v_logits, 0.25, 0.05)/logit_scale
-        v2t_logits = self.get_marginal_loss(v2t_logits, 0.25, 0.05)/logit_scale
+        # t2v_logits = self.get_marginal_loss(t2v_logits, 0.25, 0.05)/logit_scale
+        # v2t_logits = self.get_marginal_loss(v2t_logits, 0.25, 0.05)/logit_scale
 
         loss_t2v = self.loss_fct(t2v_logits * logit_scale)
         loss_v2t = self.loss_fct(v2t_logits * logit_scale)
