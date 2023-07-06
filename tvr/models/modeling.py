@@ -602,7 +602,7 @@ class SLIP(nn.Module):
                 # pdb.set_trace()
                 retrieve_logits2 = torch.einsum('ad,bvd->abv', [cls_feat, video_feat])
                 retrieve_logits2 = torch.einsum('abv,bv->ab', [retrieve_logits2, gauss_weight])
-                retrieve_logits = (retrieve_logits1 + retrieve_logits2) / 2
+                retrieve_logits = retrieve_logits1 + retrieve_logits2 * 0.1
 
 
             elif self.interact_mode == 'FGM':
