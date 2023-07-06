@@ -577,21 +577,34 @@ class SLIP(nn.Module):
             # ################################################################
             text_feat = text_feat / text_feat.norm(dim=-1, keepdim=True)
             video_feat = video_feat / video_feat.norm(dim=-1, keepdim=True)
+            cls_feat = cls/cls.norm(dim=-1, keepdim=True)
 
-            retrieve_logits = torch.einsum('atd,bvd->abtv', [text_feat, video_feat])
-            retrieve_logits = torch.einsum('abtv,at->abtv', [retrieve_logits, text_mask])
-            retrieve_logits = torch.einsum('abtv,bv->abtv', [retrieve_logits, video_mask])
+            retrieve_logits1 = torch.einsum('atd,bvd->abtv', [text_feat, video_feat])
+            retrieve_logits1 = torch.einsum('abtv,at->abtv', [retrieve_logits1, text_mask])
+            retrieve_logits1 = torch.einsum('abtv,bv->abtv', [retrieve_logits1, video_mask])
             text_sum = text_mask.sum(-1)
             video_sum = video_mask.sum(-1)
 
             if self.interact_mode == 'FGW':
                 # weighted token-wise interaction
-                t2v_logits, max_idx1 = retrieve_logits.max(dim=-1)  # abtv -> abt
+                t2v_logits, max_idx1 = retrieve_logits1.max(dim=-1)  # abtv -> abt
                 t2v_logits = torch.einsum('abt,at->ab', [t2v_logits, text_weight])
 
-                v2t_logits, max_idx2 = retrieve_logits.max(dim=-2)  # abtv -> abv
+                v2t_logits, max_idx2 = retrieve_logits1.max(dim=-2)  # abtv -> abv
                 v2t_logits = torch.einsum('abv,bv->ab', [v2t_logits, video_weight])
-                retrieve_logits = (t2v_logits + v2t_logits) / 2.0            
+                retrieve_logits1 = (t2v_logits + v2t_logits) / 2.0
+                bsz, frame_len, T = video_feat.shape
+                # props = props.view(bsz*self.num_props, 2)
+                gauss_center = props[:, 0]
+                gauss_width = props[:, 1]
+                gauss_weight = self.generate_gauss_weight(frame_len, gauss_center, gauss_width)
+                gauss_weight = gauss_weight/gauss_weight.max(dim=-1, keepdim=True)[0]
+                # pdb.set_trace()
+                retrieve_logits2 = torch.einsum('ad,bvd->abv', [cls_feat, video_feat])
+                retrieve_logits2 = torch.einsum('abv,bv->ab', [retrieve_logits2, gauss_weight])
+                retrieve_logits = (retrieve_logits1 + retrieve_logits2) / 2
+
+
             elif self.interact_mode == 'FGM':
                 t2v_logits, max_idx1 = retrieve_logits.max(dim=-1)  # abtv -> abt
                 v2t_logits, max_idx2 = retrieve_logits.max(dim=-2)  # abtv -> abv

@@ -28,7 +28,8 @@ main.py \
 --embd_mode wti \
 --do_gauss 1 \
 --interact_mode FGW \
---sal_predictor trans
+--sal_predictor trans \
+--num_props 1
 # --init_model /mnt/bd/cxx-dataset/EMCL-Net/best_outputs/msrvtt/best.bin
 # --base_encoder None \
 
@@ -166,7 +167,7 @@ main.py \
 # --master_addr ${ARNOLD_WORKER_0_HOST} \
 # --master_port ${ARNOLD_WORKER_0_PORT} \
 # main.py \
-# --do_eval 1 \
+# --do_train 1 \
 # --workers 0 \
 # --n_display 10 \
 # --epochs 5 \
@@ -182,5 +183,5 @@ main.py \
 # --video_framerate 1 \
 # --output_dir outputs/lsmdc \
 # --embd_mode wti \
-# --do_gauss 0 \
+# --do_gauss 1 \
 # --init_model /mnt/bd/cxx-dataset/EMCL-Net/best_outputs/best.bin
