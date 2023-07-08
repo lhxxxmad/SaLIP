@@ -578,7 +578,7 @@ class SLIP(nn.Module):
             text_feat = text_feat / text_feat.norm(dim=-1, keepdim=True)
             video_feat = video_feat / video_feat.norm(dim=-1, keepdim=True)
             cls_feat = cls/cls.norm(dim=-1, keepdim=True)
-
+            # pdb.set_trace()
             retrieve_logits1 = torch.einsum('atd,bvd->abtv', [text_feat, video_feat])
             retrieve_logits1 = torch.einsum('abtv,at->abtv', [retrieve_logits1, text_mask])
             retrieve_logits1 = torch.einsum('abtv,bv->abtv', [retrieve_logits1, video_mask])
