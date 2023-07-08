@@ -41,7 +41,7 @@ main.py \
 --rec_trans_num_layers1 4 \
 --rec_trans_num_layers2 4 \
 --sal_predictor trans \
---num_props 1
+--num_props 2
 
 echo "test model"
 CUDA_VISIBLE_DEVICES=0,1,2,3,4,5,6,7 \
@@ -73,7 +73,7 @@ main.py \
 --rec_trans_num_layers2 4 \
 --tmp_trans_num_layers 4 \
 --sal_predictor trans \
---num_props 1
+--num_props 2
 
 
 echo "test grounding"
@@ -100,4 +100,4 @@ main_grounding.py \
 --embd_mode wti \
 --do_gauss 1 \
 --init_model outputs/activity/best.bin \
---num_props 1
+--num_props 2

@@ -245,14 +245,14 @@ class SLIP(nn.Module):
             rec_mt, rec_tm, div_loss, ivc_loss, rec_ref_loss, rec_neg1_loss, rec_neg2_loss, _ = self.get_moment_text_rec(text_feat, video_feat, text_mask, video_mask, props, text_weight, epoch)
             rec_mt, rec_tm, div_loss, ivc_loss, rec_ref_loss, rec_neg1_loss, rec_neg2_loss = rec_mt.mean(), rec_tm.mean(), div_loss.mean(), ivc_loss.mean(), rec_ref_loss.mean(), rec_neg1_loss.mean(), rec_neg2_loss.mean()
             # final_loss = self.ret_loss_weight * retrieval_loss + self.rec_loss_weight * (rec_video_loss + rec_text_loss)/2.0 + self.temp_loss_weight * temporal_loss
-            final_loss = self.ret_loss_weight * retrieval_loss + self.rec_loss_weight * (rec_video_loss + rec_text_loss)/2.0 + div_loss*0 + ivc_loss + rec_mt + rec_mt * self.lambda1 #( + rec_tm)/2.0
+            final_loss = self.ret_loss_weight * retrieval_loss + self.rec_loss_weight * (rec_video_loss + rec_text_loss)/2.0 + ivc_loss + rec_mt #+ div_loss + rec_mt * self.lambda1 #( + rec_tm)/2.0
             # pdb.set_trace()
             final_loss_dict = {'final_loss': final_loss.item(), 
                                 'retrieval_loss': self.ret_loss_weight * retrieval_loss.item(), 
                                 'rec_video_loss': self.rec_loss_weight * rec_video_loss.item(), 
                                 'rec_text_loss': self.rec_loss_weight * rec_text_loss.item(),
-                                'rec_tm_loss': (self.lambda1 * rec_tm).item(),
-                                'div_loss': div_loss.item()*0,
+                                # 'rec_tm_loss': (self.lambda1 * rec_tm).item(),
+                                # 'div_loss': div_loss.item(),
                                 'ivc_loss': ivc_loss.item(),
                                 'rec_mt_loss': rec_mt.item(),
                                 'rec_ref_loss':rec_ref_loss.item(),
@@ -276,7 +276,7 @@ class SLIP(nn.Module):
         video_mask = video_mask.unsqueeze(1) \
             .expand(bsz, self.num_props, -1).contiguous().view(bsz*self.num_props, -1)    
         
-        masked_text, masked_vec_text = self._mask_feat(text_feat, text_mask.sum(1), text_weight, mask_rate=self.config.text_mask_rate)
+        masked_text, masked_vec_text = self._mask_feat(text_feat, text_mask.sum(1), text_weight, mask_rate=self.config.text_mask_rate, mode='dist')
         text_feat = text_feat.unsqueeze(1) \
             .expand(bsz, self.num_props, -1, -1).contiguous().view(bsz*self.num_props, -1, T)
         text_mask = text_mask.unsqueeze(1) \
@@ -412,8 +412,8 @@ class SLIP(nn.Module):
         # masked_text = self._mask_feat(text_feat, text_mask.sum(1), text_weight, mask_rate=text_mask_rate)
 
         # mask_rete 
-        masked_video, masked_vec_video = self._mask_feat(video_feat, video_mask.sum(1), video_weight, mask_rate=self.config.video_mask_rate)
-        masked_text, masked_vec_text = self._mask_feat(text_feat, text_mask.sum(1), text_weight, mask_rate=self.config.text_mask_rate)
+        masked_video, masked_vec_video = self._mask_feat(video_feat, video_mask.sum(1), video_weight, mask_rate=self.config.video_mask_rate, mode='topk')
+        masked_text, masked_vec_text = self._mask_feat(text_feat, text_mask.sum(1), text_weight, mask_rate=self.config.text_mask_rate, mode='topk')
 
         # #  p = random
         # masked_video = self._mask_feat(video_feat, video_mask.sum(1), mask_rate=self.config.video_mask_rate)
@@ -432,8 +432,8 @@ class SLIP(nn.Module):
         rec_video_loss = self.mse_loss(rec_video, video_feat)
         rec_text_loss = self.mse_loss(rec_text, text_feat)
 
-        rec_video_loss = rec_video_loss * masked_vec_video * video_weight.unsqueeze(2)
-        rec_text_loss = rec_text_loss * masked_vec_text * text_weight.unsqueeze(2)
+        rec_video_loss = rec_video_loss * masked_vec_video #* video_weight.unsqueeze(2)
+        rec_text_loss = rec_text_loss * masked_vec_text #* text_weight.unsqueeze(2)
         return rec_video_loss.mean(), rec_text_loss.mean()
 
     def get_similarity_logits(self, text_feat, cls, video_feat, text_mask, video_mask, video_attention_mask=None, gauss=False):
@@ -592,17 +592,17 @@ class SLIP(nn.Module):
 
                 v2t_logits, max_idx2 = retrieve_logits1.max(dim=-2)  # abtv -> abv
                 v2t_logits = torch.einsum('abv,bv->ab', [v2t_logits, video_weight])
-                retrieve_logits1 = (t2v_logits + v2t_logits) / 2.0
-                bsz, frame_len, T = video_feat.shape
-                # props = props.view(bsz*self.num_props, 2)
-                gauss_center = props[:, 0]
-                gauss_width = props[:, 1]
-                gauss_weight = self.generate_gauss_weight(frame_len, gauss_center, gauss_width)
-                gauss_weight = gauss_weight/gauss_weight.max(dim=-1, keepdim=True)[0]
-                # pdb.set_trace()
-                retrieve_logits2 = torch.einsum('ad,bvd->abv', [cls_feat, video_feat])
-                retrieve_logits2 = torch.einsum('abv,bv->ab', [retrieve_logits2, gauss_weight])
-                retrieve_logits = retrieve_logits1 + retrieve_logits2 * 0.1
+                retrieve_logits = (t2v_logits + v2t_logits) / 2.0
+                # bsz, frame_len, T = video_feat.shape
+                # # props = props.view(bsz*self.num_props, 2)
+                # gauss_center = props[:, 0]
+                # gauss_width = props[:, 1]
+                # gauss_weight = self.generate_gauss_weight(frame_len, gauss_center, gauss_width)
+                # gauss_weight = gauss_weight/gauss_weight.max(dim=-1, keepdim=True)[0]
+                # # pdb.set_trace()
+                # retrieve_logits2 = torch.einsum('ad,bvd->abv', [cls_feat, video_feat])
+                # retrieve_logits2 = torch.einsum('abv,bv->ab', [retrieve_logits2, gauss_weight])
+                # retrieve_logits = retrieve_logits1 + retrieve_logits2 * 0.1
 
 
             elif self.interact_mode == 'FGM':
@@ -771,7 +771,7 @@ class SLIP(nn.Module):
 
         return weight/weight.max(dim=-1, keepdim=True)[0]
 
-    def _mask_feat(self, feat, feat_len, weights=None, mask_rate = 0.3):
+    def _mask_feat(self, feat, feat_len, weights=None, mask_rate = 0.3, mode='dist'):
         
         masked_vec = []
         for i, l in enumerate(feat_len):
@@ -783,8 +783,10 @@ class SLIP(nn.Module):
                 continue
             p = weights[i, :l].cpu().detach().numpy() if weights is not None else None
             # choices = np.random.choice(np.arange(l), num_masked_vec, replace=False)
-            choices = np.random.choice(np.arange(l), num_masked_vec, replace=False, p=p)
-            # choices = torch.topk(weights[i, :l], k=num_masked_vec)[1]
+            if mode=='dist':
+                choices = np.random.choice(np.arange(l), num_masked_vec, replace=False, p=p)
+            elif mode=='topk':
+                choices = torch.topk(weights[i, :l], k=num_masked_vec)[1]
             masked_vec[-1][choices] = 1
 
         masked_vec = torch.stack(masked_vec, 0).unsqueeze(-1)
