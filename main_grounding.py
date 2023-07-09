@@ -398,7 +398,7 @@ def _run_on_single_gpu(model, t_mask_list, v_mask_list, t_feat_list, v_feat_list
         # for idx1, (t_mask, t_feat, cls) in enumerate(zip(batch_t_mask, batch_t_feat, batch_cls_feat)):
         #     each_row = []
         #     for idx2, (v_mask, v_feat) in enumerate(zip(batch_v_mask, batch_v_feat)):
-        #         pdb.set_trace()
+        #         
         #         logits, *_tmp, props = model.get_similarity_logits(t_feat, cls, v_feat, t_mask, v_mask, gauss=gauss)
         #         loss1, loss2 = model.get_moment_text_rec(t_feat, cls, v_feat, t_mask, v_mask, props, None)
         #         grounding_loss = (loss1+loss2)/2
@@ -536,7 +536,7 @@ def eval_epoch(args, model, test_dataloader, device):
     logger.info('[start] compute_metrics')
     res = top_1_metric(selected_props, batch_moment.cpu())
     logger.info(res)
-    # pdb.set_trace()
+    # 
 
     # if multi_sentence_:
     #     logger.info("before reshape, sim matrix size: {} x {}".format(sim_matrix.shape[0], sim_matrix.shape[1]))

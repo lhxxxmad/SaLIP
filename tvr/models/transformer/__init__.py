@@ -29,7 +29,7 @@ class DualTransformer(nn.Module):
                 enc_out, _ = self.decoder2(None, None, src2, src_mask2, tgt_gauss_weight=gauss_weight)
             out, weight = self.decoder1(enc_out, src_mask2, src1, src_mask1, src_gauss_weight=gauss_weight)
         elif decoding == 2:
-            # pdb.set_trace()
+            # 
             if enc_out is None:
                 enc_out, _ = self.decoder1(None, None, src1, src_mask1, tgt_gauss_weight=gauss_weight)
                 # enc_out = self.decoder1(None, None, src1, src_mask1)

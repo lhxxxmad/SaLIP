@@ -239,7 +239,7 @@ class ActivityNetDataset_Grounding(Dataset):
     def __getitem__(self, feature_idx):
         ann = self.annotations[feature_idx]
         # vid = self.pseudo_caption_dict[ann['vid']]
-        # pdb.set_trace()
+        # 
         # pseudo_video_id, sub_id = self.iter2video_pairs_dict[feature_idx]
         # idx = self.video_id2idx_dict[pseudo_video_id]
         pairs_text, pairs_mask, pairs_segment, starts, ends = self._get_text(ann['vid'], 0, ann)

@@ -239,25 +239,25 @@ class SLIP(nn.Module):
                 video_mask = video_mask[:, : -1]
 
             # rec_text_loss, rec_video_loss , temporal_loss = 0,0,0
-            rec_video_loss, rec_text_loss = self.get_rec_loss(text_feat, video_feat, text_mask, video_mask, text_weight, video_weight)
-            temporal_loss = self.get_temporal_order_loss(text_feat, video_feat, text_mask, video_mask, text_weight, video_weight)
+            # rec_video_loss, rec_text_loss = self.get_rec_loss(text_feat, video_feat, text_mask, video_mask, text_weight, video_weight)
+            # temporal_loss = self.get_temporal_order_loss(text_feat, video_feat, text_mask, video_mask, text_weight, video_weight)
             # moment-text rec
-            rec_mt, rec_tm, div_loss, ivc_loss, rec_ref_loss, rec_neg1_loss, rec_neg2_loss, _ = self.get_moment_text_rec(text_feat, video_feat, text_mask, video_mask, props, text_weight, epoch)
-            rec_mt, rec_tm, div_loss, ivc_loss, rec_ref_loss, rec_neg1_loss, rec_neg2_loss = rec_mt.mean(), rec_tm.mean(), div_loss.mean(), ivc_loss.mean(), rec_ref_loss.mean(), rec_neg1_loss.mean(), rec_neg2_loss.mean()
+            # rec_mt, rec_tm, div_loss, ivc_loss, rec_ref_loss, rec_neg1_loss, rec_neg2_loss, _ = self.get_moment_text_rec(text_feat, video_feat, text_mask, video_mask, props, text_weight, epoch)
+            # rec_mt, rec_tm, div_loss, ivc_loss, rec_ref_loss, rec_neg1_loss, rec_neg2_loss = rec_mt.mean(), rec_tm.mean(), div_loss.mean(), ivc_loss.mean(), rec_ref_loss.mean(), rec_neg1_loss.mean(), rec_neg2_loss.mean()
             # final_loss = self.ret_loss_weight * retrieval_loss + self.rec_loss_weight * (rec_video_loss + rec_text_loss)/2.0 + self.temp_loss_weight * temporal_loss
-            final_loss = self.ret_loss_weight * retrieval_loss + self.rec_loss_weight * (rec_video_loss + rec_text_loss)/2.0 + ivc_loss + rec_mt #+ div_loss + rec_mt * self.lambda1 #( + rec_tm)/2.0
-            # pdb.set_trace()
+            final_loss = self.ret_loss_weight * retrieval_loss #+ self.rec_loss_weight * (rec_video_loss + rec_text_loss)/2.0 + ivc_loss + rec_mt #+ div_loss + rec_mt * self.lambda1 #( + rec_tm)/2.0
+       
             final_loss_dict = {'final_loss': final_loss.item(), 
                                 'retrieval_loss': self.ret_loss_weight * retrieval_loss.item(), 
-                                'rec_video_loss': self.rec_loss_weight * rec_video_loss.item(), 
-                                'rec_text_loss': self.rec_loss_weight * rec_text_loss.item(),
+                                # 'rec_video_loss': self.rec_loss_weight * rec_video_loss.item(), 
+                                # 'rec_text_loss': self.rec_loss_weight * rec_text_loss.item(),
                                 # 'rec_tm_loss': (self.lambda1 * rec_tm).item(),
                                 # 'div_loss': div_loss.item(),
-                                'ivc_loss': ivc_loss.item(),
-                                'rec_mt_loss': rec_mt.item(),
-                                'rec_ref_loss':rec_ref_loss.item(),
-                                'rec_neg1_loss':rec_neg1_loss.item(),
-                                'rec_neg2_loss':rec_neg2_loss.item(),
+                                # 'ivc_loss': ivc_loss.item(),
+                                # 'rec_mt_loss': rec_mt.item(),
+                                # 'rec_ref_loss':rec_ref_loss.item(),
+                                # 'rec_neg1_loss':rec_neg1_loss.item(),
+                                # 'rec_neg2_loss':rec_neg2_loss.item(),
                                 # 'temporal_loss': self.temp_loss_weight * temporal_loss.item()
                                 }
             
@@ -295,7 +295,7 @@ class SLIP(nn.Module):
         rec_text = self.rec_text_trans2(video_feat, None, masked_text, None, decoding=2, gauss_weight=pos_weight)[1]
         rec_video = self.rec_video_trans2(text_feat, None, mask_moment, None,  decoding=2, gauss_weight=None)[1]
         rec_ref = self.rec_video_trans2(video_feat, None, masked_text, None,  decoding=2, gauss_weight=None)[1]
-        # pdb.set_trace()
+
         # negative
         neg_1_weight, neg_2_weight = self.negative_proposal_mining(self.config.max_frames, gauss_center, gauss_width, epoch)
         rec_neg1 = self.rec_video_trans2(video_feat, None, masked_text, None,  decoding=2, gauss_weight=neg_1_weight)[1]
@@ -316,11 +316,11 @@ class SLIP(nn.Module):
 
         rec_neg2_loss = self.mse_loss(rec_neg2, text_feat) * masked_vec_text.unsqueeze(-1) #* text_weight.unsqueeze(2)
         rec_neg2_loss = torch.gather(rec_neg2_loss.mean(-1).mean(-1).view(bsz, self.num_props), index=idx, dim=-1).squeeze(-1)
-        # pdb.set_trace()
+        # 
         # rec_video_loss = rec_video_loss * masked_vec_video #* pos_weight.unsqueeze(2)
         # rec_text_loss = rec_text_loss * masked_vec_text.unsqueeze(-1) #* text_weight.unsqueeze(2)
         # rec_ref_loss = rec_ref_loss * video_mask.unsqueeze(-1)
-        # pdb.set_trace()
+        # 
         # div loss
         gauss_weight = gauss_weight.view(bsz, self.num_props, -1)
         gauss_weight = gauss_weight / gauss_weight.sum(dim=-1, keepdim=True)
@@ -329,7 +329,7 @@ class SLIP(nn.Module):
         div_loss = torch.norm(target - source, dim=(1, 2))**2
 
         # ivc loss
-        # pdb.set_trace()
+        # 
         tmp_0 = torch.zeros_like(rec_text_loss).cuda()
         tmp_0.requires_grad = False
         ivc_loss = torch.max(rec_text_loss - rec_ref_loss + self.margin1, tmp_0) \
@@ -578,10 +578,11 @@ class SLIP(nn.Module):
             text_feat = text_feat / text_feat.norm(dim=-1, keepdim=True)
             video_feat = video_feat / video_feat.norm(dim=-1, keepdim=True)
             cls_feat = cls/cls.norm(dim=-1, keepdim=True)
-            # pdb.set_trace()
+            # 
+            video_feat, video_mask = self._mask_feat(video_feat, video_mask.sum(1), video_weight, mask_rate=0.5, mode='topk', mask_idx='0')
             retrieve_logits1 = torch.einsum('atd,bvd->abtv', [text_feat, video_feat])
             retrieve_logits1 = torch.einsum('abtv,at->abtv', [retrieve_logits1, text_mask])
-            retrieve_logits1 = torch.einsum('abtv,bv->abtv', [retrieve_logits1, video_mask])
+            retrieve_logits1 = torch.einsum('abtv,bv->abtv', [retrieve_logits1, video_mask.squeeze(-1)])
             text_sum = text_mask.sum(-1)
             video_sum = video_mask.sum(-1)
 
@@ -599,7 +600,7 @@ class SLIP(nn.Module):
                 # gauss_width = props[:, 1]
                 # gauss_weight = self.generate_gauss_weight(frame_len, gauss_center, gauss_width)
                 # gauss_weight = gauss_weight/gauss_weight.max(dim=-1, keepdim=True)[0]
-                # # pdb.set_trace()
+             
                 # retrieve_logits2 = torch.einsum('ad,bvd->abv', [cls_feat, video_feat])
                 # retrieve_logits2 = torch.einsum('abv,bv->ab', [retrieve_logits2, gauss_weight])
                 # retrieve_logits = retrieve_logits1 + retrieve_logits2 * 0.1
@@ -771,13 +772,16 @@ class SLIP(nn.Module):
 
         return weight/weight.max(dim=-1, keepdim=True)[0]
 
-    def _mask_feat(self, feat, feat_len, weights=None, mask_rate = 0.3, mode='dist'):
+    def _mask_feat(self, feat, feat_len, weights=None, mask_rate = 0.3, mode='dist', mask_idx='1', mask_num=None):
         
         masked_vec = []
         for i, l in enumerate(feat_len):
             l = int(l)
             # num_masked_vec = max(l // 3, 1) 
-            num_masked_vec = max(int(l * mask_rate), 1) 
+            if mask_num is not None:
+                num_masked_vec = max(int(mask_num), 1)
+            else:
+                num_masked_vec = max(int(l * mask_rate), 1) 
             masked_vec.append(torch.zeros([feat.size(1)]).byte().cuda())
             if l < 1:
                 continue
@@ -791,7 +795,10 @@ class SLIP(nn.Module):
 
         masked_vec = torch.stack(masked_vec, 0).unsqueeze(-1)
         # out_feat = feat.masked_fill(masked_vec == 1, float("-inf"))
-        out_feat = feat.masked_fill(masked_vec == 1, 0)
+        if mask_idx == '1':
+            out_feat = feat.masked_fill(masked_vec == 1, 0)
+        elif mask_idx == '0':
+            out_feat = feat.masked_fill(masked_vec == 0, 0)
         return out_feat, masked_vec
     def _mask_moment(self, video_feat, video_mask, center, width):
         video_len = video_mask.sum(1)
