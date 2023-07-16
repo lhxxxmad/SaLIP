@@ -12,6 +12,7 @@ export PYTHONWARNINGS='ignore:semaphore_tracker:UserWarning'
 split_hosts=$(echo $ARNOLD_WORKER_HOSTS | tr ":" "\n")
 split_hosts=($split_hosts)
 
+
 DATA_PATH=./data/anet
 CUDA_VISIBLE_DEVICES=0,1,2,3,4,5,6,7 \
 python3 -m torch.distributed.launch --nproc_per_node=8 \
