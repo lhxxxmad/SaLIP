@@ -580,7 +580,7 @@ class SLIP(nn.Module):
             video_feat = video_feat / video_feat.norm(dim=-1, keepdim=True)
             cls_feat = cls/cls.norm(dim=-1, keepdim=True)
             # 
-            video_feat, video_mask = self._mask_feat(video_feat, video_mask.sum(1), video_weight, mask_rate=0.5, mode='topk', mask_idx='0')
+            # video_feat, video_mask = self._mask_feat(video_feat, video_mask.sum(1), video_weight, mask_rate=0.5, mode='topk', mask_idx='0')
             retrieve_logits1 = torch.einsum('atd,bvd->abtv', [text_feat, video_feat])
             retrieve_logits1 = torch.einsum('abtv,at->abtv', [retrieve_logits1, text_mask])
             retrieve_logits1 = torch.einsum('abtv,bv->abtv', [retrieve_logits1, video_mask.squeeze(-1)])
