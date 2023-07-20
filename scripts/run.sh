@@ -5,31 +5,31 @@ split_hosts=$(echo $ARNOLD_WORKER_HOSTS | tr ":" "\n")
 split_hosts=($split_hosts)
 
 # MSRVTT --do_train 1 \
-# CUDA_VISIBLE_DEVICES=0 \
-# python3 -m torch.distributed.launch --nproc_per_node=1 \
-# --master_addr ${ARNOLD_WORKER_0_HOST} \
-# --master_port ${ARNOLD_WORKER_0_PORT} \
-# main.py \
-# --do_train 1 \
-# --workers 0 \
-# --n_display 50 \
-# --epochs 5 \
-# --lr 1e-4 \
-# --coef_lr 1e-3 \
-# --batch_size 64 \
-# --batch_size_val 64 \
-# --anno_path /mnt/bd/cxx-dataset/CLIP4Clip/data/MSRVTT/msrvtt_data \
-# --video_path /mnt/bd/cxx-dataset/CLIP4Clip/data/MSRVTT/MSRVTT_Videos \
-# --datatype msrvtt \
-# --max_words 32 \
-# --max_frames 12 \
-# --video_framerate 1 \
-# --output_dir outputs/msrvtt \
-# --embd_mode wti \
-# --do_gauss 1 \
-# --interact_mode FGW \
-# --sal_predictor trans \
-# --num_props 4
+CUDA_VISIBLE_DEVICES=0 \
+python3 -m torch.distributed.launch --nproc_per_node=1 \
+--master_addr ${ARNOLD_WORKER_0_HOST} \
+--master_port ${ARNOLD_WORKER_0_PORT} \
+main.py \
+--do_train 1 \
+--workers 0 \
+--n_display 50 \
+--epochs 5 \
+--lr 1e-4 \
+--coef_lr 1e-3 \
+--batch_size 64 \
+--batch_size_val 64 \
+--anno_path /mnt/bd/cxx-dataset/CLIP4Clip/data/MSRVTT/msrvtt_data \
+--video_path /mnt/bd/cxx-dataset/CLIP4Clip/data/MSRVTT/MSRVTT_Videos \
+--datatype msrvtt \
+--max_words 32 \
+--max_frames 12 \
+--video_framerate 1 \
+--output_dir outputs/msrvtt \
+--embd_mode wti \
+--do_gauss 1 \
+--interact_mode FGW \
+--sal_predictor trans \
+--num_props 4
 # --init_model /mnt/bd/cxx-dataset/EMCL-Net/best_outputs/msrvtt/best.bin
 # --base_encoder None \
 
