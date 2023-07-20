@@ -14,6 +14,7 @@ from .transformer import DualTransformer
 from .transformer.mutihead_attention import MultiheadAttention
 from .transformer.xpool import XPool
 from .loss import ivc_loss, cal_nll_loss, rec_loss
+from ..utils.metrics import calculate_IoU_batch
 import numpy as np
 allgather = AllGather.apply
 allgather2 = AllGather2.apply
@@ -255,7 +256,7 @@ class SLIP(nn.Module):
                                 # 'div_loss': div_loss.item(),
                                 'ivc_loss': ivc_loss.item(),
                                 'rec_mt_loss': rec_mt.item(),
-                                # 'rec_ref_loss':rec_ref_loss.item(),
+                                'rec_ref_loss':rec_ref_loss.item(),
                                 'rec_neg1_loss':rec_neg1_loss.item(),
                                 'rec_neg2_loss':rec_neg2_loss.item(),
                                 # 'temporal_loss': self.temp_loss_weight * temporal_loss.item()
@@ -270,7 +271,18 @@ class SLIP(nn.Module):
         # props = props.view(bsz*self.num_props, 2)
         gauss_center = props[:, 0]
         gauss_width = props[:, 1]
+        # pdb.set_trace() props 128 2
+        # num_props = self.num_props
+        # votes = np.zeros((bsz, self.num_props))
+        # c = np.ones((bsz, self.num_props))
+        # for i in range(self.num_props):
+        #     for j in range(self.num_props):
+        #         iou = calculate_IoU_batch((props[:, i, 0], props[:, i, 1]), (props[:, j, 0], props[:, j, 1]))
+        #         iou = iou * c[:, j]
+        #         votes[:, i] = votes[:, i] + iou
+        # idx = np.argmax(votes, axis=1)
 
+        # pdb.set_trace()
         video_feat = video_feat.unsqueeze(1) \
             .expand(bsz, self.num_props, -1, -1).contiguous().view(bsz*self.num_props, -1, T)
         video_mask = video_mask.unsqueeze(1) \
@@ -335,7 +347,7 @@ class SLIP(nn.Module):
         tmp_0.requires_grad = False
         ivc_loss = torch.max(rec_text_loss - rec_neg1_loss + self.margin2, tmp_0) \
                     + torch.max(rec_text_loss - rec_neg2_loss + self.margin2, tmp_0) \
-                        # torch.max(rec_text_loss - rec_ref_loss + self.margin1, tmp_0) \
+                        + torch.max(rec_text_loss - rec_ref_loss + self.margin1, tmp_0) \
 
         return rec_text_loss, rec_video_loss, div_loss, ivc_loss, rec_ref_loss, rec_neg1_loss, rec_neg2_loss, idx
 

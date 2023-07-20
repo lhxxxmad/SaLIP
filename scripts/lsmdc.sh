@@ -40,7 +40,7 @@ main.py \
 --rec_trans_num_layers1 4 \
 --rec_trans_num_layers2 4 \
 --sal_predictor ca+mlp \
---num_props 2
+--num_props 4
 
 echo "test model"
 CUDA_VISIBLE_DEVICES=0,1,2,3,4,5,6,7 \
@@ -71,7 +71,7 @@ main.py \
 --rec_trans_num_layers1 4 \
 --rec_trans_num_layers2 4 \
 --sal_predictor ca+mlp \
---num_props 2
+--num_props 4
 
 
 # echo "test grounding"

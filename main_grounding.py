@@ -18,7 +18,7 @@ from tvr.models.tokenization_clip import SimpleTokenizer as ClipTokenizer
 from tvr.dataloaders.data_dataloaders import DATALOADER_DICT
 from tvr.models.modeling import SLIP, AllGather
 from tvr.models.optimization import BertAdam
-from tvr.utils.metrics import compute_metrics, tensor_text_to_video_metrics, tensor_video_to_text_sim, top_1_metric
+from tvr.utils.metrics import compute_metrics, tensor_text_to_video_metrics, tensor_video_to_text_sim, top_1_metric, calculate_IoU_batch
 
 from tvr.utils.comm import is_main_process, synchronize
 from tvr.utils.logger import setup_logger
