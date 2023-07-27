@@ -142,7 +142,7 @@ main_grounding.py \
 # --embd_mode wti \
 # --do_gauss 0 \
 
-# --num_props 4
+# --num_props 2
 # --init_model /mnt/bd/cxx-dataset/EMCL-Net/outputs/pytorch_model.bin.best.1
 
 # # MSVD

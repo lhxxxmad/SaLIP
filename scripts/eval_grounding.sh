@@ -37,7 +37,7 @@ main_grounding.py \
 --output_dir outputs/activity \
 --embd_mode wti \
 --do_gauss 1 \
---init_model best.bin
+--init_model best(66.33).bin
 
 # MSRVTT --do_train 1 \
 # CUDA_VISIBLE_DEVICES=0 \
@@ -118,7 +118,7 @@ main_grounding.py \
 # --embd_mode wti \
 # --do_gauss 0 \
 
-# --num_props 4
+# --num_props 2
 # --init_model /mnt/bd/cxx-dataset/EMCL-Net/outputs/pytorch_model.bin.best.1
 
 # # MSVD
