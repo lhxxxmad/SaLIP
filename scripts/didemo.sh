@@ -40,7 +40,7 @@ main.py \
 --temp_loss_weight 1.0 \
 --rec_loss_weight 1.0 \
 --ret_loss_weight 1.0 \
---num_props 2
+--num_props 1
 
 echo "test model"
 CUDA_VISIBLE_DEVICES=0,1,2,3,4,5,6,7 \
@@ -68,4 +68,4 @@ main.py \
 --do_gauss 1 \
 --video_mask_rate 0.1 \
 --text_mask_rate 0.1 \
---num_props 2
+--num_props 1
