@@ -29,7 +29,7 @@ split_hosts=($split_hosts)
 # --do_gauss 1 \
 # --interact_mode FGW \
 # --sal_predictor trans \
-# --num_props 1
+# --num_props 3
 # --init_model /mnt/bd/cxx-dataset/EMCL-Net/best_outputs/msrvtt/best.bin
 # --base_encoder None \
 
@@ -84,7 +84,7 @@ split_hosts=($split_hosts)
 # --embd_mode wti \
 # --do_gauss 0 \
 
-# --num_props 1
+# --num_props 3
 # --init_model /mnt/bd/cxx-dataset/EMCL-Net/outputs/pytorch_model.bin.best.1
 
 # # MSVD

@@ -41,7 +41,7 @@ main.py \
 --rec_loss_weight 1.0 \
 --ret_loss_weight 1.0 \
 --sal_predictor ca+mlp \
---num_props 1
+--num_props 3
 
 echo "test model"
 CUDA_VISIBLE_DEVICES=0,1,2,3,4,5,6,7 \
@@ -73,4 +73,4 @@ main.py \
 --rec_loss_weight 1.0 \
 --ret_loss_weight 1.0 \
 --sal_predictor ca+mlp \
---num_props 1
+--num_props 3

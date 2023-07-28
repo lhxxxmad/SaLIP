@@ -18,7 +18,7 @@ from tvr.models.tokenization_clip import SimpleTokenizer as ClipTokenizer
 from tvr.dataloaders.data_dataloaders import DATALOADER_DICT
 from tvr.models.modeling import SLIP, AllGather
 from tvr.models.optimization import BertAdam
-from tvr.utils.metrics import compute_metrics, tensor_text_to_video_metrics, tensor_video_to_text_sim, top_1_metric, calculate_IoU_batch
+from tvr.utils.metrics import compute_metrics, tensor_text_to_video_metrics, tensor_video_to_text_sim, top_1_metric,top_n_metric, calculate_IoU_batch
 
 from tvr.utils.comm import is_main_process, synchronize
 from tvr.utils.logger import setup_logger
@@ -394,7 +394,7 @@ def _run_on_single_gpu(model, t_mask_list, v_mask_list, t_feat_list, v_feat_list
             selected_prop = torch.stack([torch.clamp(center-width/2, min=0), 
                                     torch.clamp(center+width/2, max=1)], dim=-1)
             selected_prop = selected_prop.cpu().numpy()
-            selected_props.append(selected_prop[:,0])
+            selected_props.append(selected_prop) #[:,0]
         # for idx1, (t_mask, t_feat, cls) in enumerate(zip(batch_t_mask, batch_t_feat, batch_cls_feat)):
         #     each_row = []
         #     for idx2, (v_mask, v_feat) in enumerate(zip(batch_v_mask, batch_v_feat)):
@@ -534,8 +534,13 @@ def eval_epoch(args, model, test_dataloader, device):
     # bsz = batch_moment.shape[0]
     toc2 = time.time()
     logger.info('[start] compute_metrics')
-    res = top_1_metric(selected_props, batch_moment.cpu())
-    logger.info(res)
+    # pdb.set_trace()
+    logger.info('Rank@1')
+    res_1 = top_1_metric(selected_props[:,0], batch_moment.cpu())
+    logger.info(res_1)
+    logger.info('Rank@', model.num_props)
+    res_n = top_n_metric(selected_props[::model.num_props].transpose(1, 0, 2), batch_moment.cpu())
+    logger.info(res_n)
     # 
 
     # if multi_sentence_:
