@@ -158,7 +158,8 @@ main_grounding.py \
 --output_dir outputs/activity \
 --embd_mode wti \
 --do_gauss 1 \
---init_model /mnt/bd/cxx-third/GTVR/outputs/best/best\(66.33\).bin
+--num_props 3 \
+--init_model /mnt/bd/cxx-third/GTVR/outputs/best/best.bin
 
 
 # LSMDC 
