@@ -23,6 +23,19 @@ def top_1_metric(pred, label):
         result['IoU@0.{}'.format(i)] = 1.0 * np.sum(iou >= i / 10) / bsz
     return result
 
+def top_n_metric(preds, label):
+    result = {}
+    bsz = preds[0].shape[0]
+    top_iou = []
+    for pred in preds:
+        iou = calculate_IoU_batch((pred[:, 0], pred[:, 1]), (label[:, 0], label[:, 1]))
+        top_iou.append(iou)
+    iou = np.max(np.stack(top_iou, 1), 1)
+    result['mIoU'] = np.mean(iou)
+    for i in range(1, 10, 2):
+        result['IoU@0.{}'.format(i)] = 1.0 * np.sum(iou >= i / 10) / bsz
+    return result
+    
 def compute_metrics(x):
     sx = np.sort(-x, axis=1)
     d = np.diag(-x)

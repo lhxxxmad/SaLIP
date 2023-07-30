@@ -378,6 +378,7 @@ def _run_on_single_gpu(model, t_mask_list, v_mask_list, t_feat_list, v_feat_list
         for _, (t_mask, t_feat, cls, v_mask, v_feat) in enumerate(zip(batch_t_mask, batch_t_feat, batch_cls_feat, batch_v_mask, batch_v_feat)):
             bsz = v_feat.shape[0]
             _, _, text_weight, video_weight, props = model.get_similarity_logits(t_feat, cls, v_feat, t_mask, v_mask, gauss=gauss)
+
             if gauss:
                 # remove learnable token
                 t_feat = t_feat[:, : -1]
@@ -538,9 +539,9 @@ def eval_epoch(args, model, test_dataloader, device):
     logger.info('Rank@1')
     res_1 = top_1_metric(selected_props[:,0], batch_moment.cpu())
     logger.info(res_1)
-    logger.info('Rank@', model.num_props)
-    res_n = top_n_metric(selected_props[::model.num_props].transpose(1, 0, 2), batch_moment.cpu())
-    logger.info(res_n)
+    # logger.info('Rank@', model.num_props)
+    # res_n = top_n_metric(selected_props[::model.num_props].transpose(1, 0, 2), batch_moment.cpu())
+    # logger.info(res_n)
     # 
 
     # if multi_sentence_:
