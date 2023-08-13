@@ -36,8 +36,8 @@ class DualTransformer(nn.Module):
             out, weight = self.decoder2(enc_out, src_mask1, src2, src_mask2, src_gauss_weight=gauss_weight)
         elif decoding == 3:
             if enc_out is None:
-                enc_out = src2
-            out, weight = self.decoder1(enc_out, src_mask2, src1, src_mask1, tgt_gauss_weight=gauss_weight, self_att=False)        
+                enc_out = src1
+            out, weight = self.decoder2(enc_out, src_mask1, src2, src_mask2, src_gauss_weight=gauss_weight)    
         if need_weight:
             return enc_out, out, weight
         return enc_out, out

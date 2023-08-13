@@ -304,15 +304,15 @@ class SLIP(nn.Module):
         pos_weight = gauss_weight/gauss_weight.max(dim=-1, keepdim=True)[0]
         mask_moment, masked_vec_video = self._mask_moment(video_feat, video_mask, gauss_center, gauss_width)
 
-        rec_text = self.rec_text_trans2(video_feat, None, masked_text, None, decoding=2, gauss_weight=pos_weight)[1]
-        rec_video = self.rec_video_trans2(text_feat, None, mask_moment, None,  decoding=2, gauss_weight=None)[1]
+        rec_text = self.rec_text_trans2(video_feat, None, masked_text, None, decoding=3, gauss_weight=pos_weight)[1]
+        rec_video = self.rec_video_trans2(text_feat, None, mask_moment, None,  decoding=3, gauss_weight=None)[1]
 
-        rec_ref = self.rec_video_trans2(video_feat, None, masked_text, None,  decoding=2, gauss_weight=None)[1]
+        rec_ref = self.rec_video_trans2(video_feat, None, masked_text, None,  decoding=3, gauss_weight=None)[1]
 
         # negative
         neg_1_weight, neg_2_weight = self.negative_proposal_mining(self.config.max_frames, gauss_center, gauss_width, epoch)
-        rec_neg1 = self.rec_video_trans2(video_feat, None, masked_text, None,  decoding=2, gauss_weight=neg_1_weight)[1]
-        rec_neg2 = self.rec_video_trans2(video_feat, None, masked_text, None,  decoding=2, gauss_weight=neg_2_weight)[1]
+        rec_neg1 = self.rec_video_trans2(video_feat, None, masked_text, None,  decoding=3, gauss_weight=neg_1_weight)[1]
+        rec_neg2 = self.rec_video_trans2(video_feat, None, masked_text, None,  decoding=3, gauss_weight=neg_2_weight)[1]
 
         rec_text_loss = self.mse_loss(rec_text, text_feat) * masked_vec_text.unsqueeze(-1) #* text_weight.unsqueeze(2)
         rec_text_loss, idx = rec_text_loss.mean(-1).mean(-1).view(bsz, self.num_props).min(-1)
@@ -383,8 +383,8 @@ class SLIP(nn.Module):
         shuffle_video_feat = video_feat[:,shuffle_idx]
         shuffle_video_mask = video_mask[:,shuffle_idx]
         recover_idx = torch.argsort(shuffle_idx)
-        shuffle_out = self.temporal_trans(text_feat, None, shuffle_video_feat, None,  decoding=2, gauss_weight=text_weight)[1]
-        # shuffle_out = self.temporal_trans(text_feat, text_mask, shuffle_video_feat, shuffle_video_mask,  decoding=2, gauss_weight=text_weight)[1]
+        shuffle_out = self.temporal_trans(text_feat, None, shuffle_video_feat, None,  decoding=3, gauss_weight=text_weight)[1]
+        # shuffle_out = self.temporal_trans(text_feat, text_mask, shuffle_video_feat, shuffle_video_mask,  decoding=3, gauss_weight=text_weight)[1]
         temporal_order_pred = self.temporal_order_fc(shuffle_out).squeeze()
         shuffle_idx = shuffle_idx.unsqueeze(0).repeat(B,1)
         # temporal_loss = self.BCE_loss(temporal_order_pred, shuffle_idx, shuffle_video_mask)
@@ -431,14 +431,14 @@ class SLIP(nn.Module):
         # masked_text = self._mask_feat(text_feat, text_mask.sum(1), mask_rate=self.config.text_mask_rate)
         # w/ mask
         # rec_video = self.rec_trans(masked_video, video_mask, text_feat, text_mask, decoding=1, gauss_weight=text_weight)[1]
-        # rec_text = self.rec_trans(video_feat, video_mask, masked_text, text_mask, decoding=2, gauss_weight=video_weight)[1]
+        # rec_text = self.rec_trans(video_feat, video_mask, masked_text, text_mask, decoding=3, gauss_weight=video_weight)[1]
 
-        rec_video = self.rec_video_trans1(text_feat, None, masked_video, None,  decoding=2, gauss_weight=text_weight)[1]
-        rec_text = self.rec_text_trans1(video_feat, None, masked_text, None, decoding=2, gauss_weight=video_weight)[1]
+        rec_video = self.rec_video_trans1(text_feat, None, masked_video, None,  decoding=3, gauss_weight=text_weight)[1]
+        rec_text = self.rec_text_trans1(video_feat, None, masked_text, None, decoding=3, gauss_weight=video_weight)[1]
 
         # w/o gauss weight
-        # rec_video = self.rec_video_trans(text_feat, None, masked_video, None,  decoding=2, gauss_weight=text_weight)[1]
-        # rec_text = self.rec_text_trans(video_feat, None, masked_text, None, decoding=2, gauss_weight=video_weight)[1]
+        # rec_video = self.rec_video_trans(text_feat, None, masked_video, None,  decoding=3, gauss_weight=text_weight)[1]
+        # rec_text = self.rec_text_trans(video_feat, None, masked_text, None, decoding=3, gauss_weight=video_weight)[1]
 
         rec_video_loss = self.mse_loss(rec_video, video_feat)
         rec_text_loss = self.mse_loss(rec_text, text_feat)
