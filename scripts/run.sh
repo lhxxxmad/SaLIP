@@ -26,7 +26,7 @@ main.py \
 --video_framerate 1 \
 --output_dir outputs/msrvtt \
 --embd_mode wti \
---do_gauss 1 \
+--do_gauss 0 \
 --interact_mode FGW \
 --sal_predictor trans \
 --num_props 3
@@ -138,9 +138,9 @@ main.py \
 # anet
 # CUDA_VISIBLE_DEVICES=0 \
 # python3 -m torch.distributed.launch --nproc_per_node=1 \
-# --master_addr ${split_hosts[0]} \
-# --master_port ${split_hosts[1]} \
-# main_grounding.py \
+# --master_addr ${ARNOLD_WORKER_0_HOST} \
+# --master_port ${ARNOLD_WORKER_0_PORT} \
+# main.py \
 # --do_eval 1 \
 # --workers 0 \
 # --n_display 50 \
@@ -186,3 +186,29 @@ main.py \
 # --embd_mode wti \
 # --do_gauss 1 \
 # --init_model /mnt/bd/cxx-dataset/EMCL-Net/best_outputs/best.bin
+
+
+# CUDA_VISIBLE_DEVICES=0 \
+# python3 -m torch.distributed.launch --nproc_per_node=1 \
+# --master_addr ${ARNOLD_WORKER_0_HOST} \
+# --master_port ${ARNOLD_WORKER_0_PORT} \
+# main.py \
+# --do_eval 1 \
+# --workers 0 \
+# --n_display 50 \
+# --epochs 5 \
+# --lr 1e-4 \
+# --coef_lr 1e-3 \
+# --batch_size 8 \
+# --batch_size_val 8 \
+# --anno_path /mnt/bd/cxx-dataset/CLIP4Clip/data/activitynet/anet \
+# --video_path /mnt/bd/cxx-dataset/CLIP4Clip/data/activitynet/anet/Activity_Videos \
+# --datatype activity \
+# --max_words 64 \
+# --max_frames 64 \
+# --video_framerate 1 \
+# --output_dir outputs/activity \
+# --embd_mode wti \
+# --do_gauss 1 \
+# --num_props 3 \
+# --init_model /mnt/bd/cxx-third/GTVR/outputs/best/best.bin
