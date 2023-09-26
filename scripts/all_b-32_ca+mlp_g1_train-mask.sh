@@ -51,6 +51,7 @@ main.py \
 --rec_trans_num_layers1 4 \
 --rec_trans_num_layers2 4 \
 --sal_predictor ca+mlp \
+--training_mask 1
 
 
 echo "test anet"
@@ -83,6 +84,7 @@ main.py \
 --rec_trans_num_layers2 4 \
 --tmp_trans_num_layers 4 \
 --sal_predictor ca+mlp \
+--training_mask 1
 
 
 echo "train didemo"
@@ -115,6 +117,7 @@ main.py \
 --rec_loss_weight 1.0 \
 --ret_loss_weight 1.0 \
 --sal_predictor ca+mlp \
+--training_mask 1
 
 
 echo "test didemo"
@@ -144,6 +147,7 @@ main.py \
 --video_mask_rate 0.1 \
 --text_mask_rate 0.1 \
 --sal_predictor ca+mlp \
+--training_mask 1
 
 
 echo "train msrvtt"
@@ -176,6 +180,8 @@ main.py \
 --rec_loss_weight 1.0 \
 --ret_loss_weight 1.0 \
 --sal_predictor ca+mlp \
+--training_mask 1
+
 
 
 echo "test msrvtt"
@@ -208,7 +214,7 @@ main.py \
 --rec_loss_weight 1.0 \
 --ret_loss_weight 1.0 \
 --sal_predictor ca+mlp \
-
+--training_mask 1
 
 echo "train lsmdc"
 DATA_PATH=./data/Clip_LSMDC
@@ -239,7 +245,7 @@ main.py \
 --rec_trans_num_layers1 4 \
 --rec_trans_num_layers2 4 \
 --sal_predictor ca+mlp \
-
+--training_mask 1
 
 echo "test lsmdc"
 CUDA_VISIBLE_DEVICES=0,1,2,3,4,5,6,7 \
@@ -270,3 +276,4 @@ main.py \
 --rec_trans_num_layers1 4 \
 --rec_trans_num_layers2 4 \
 --sal_predictor ca+mlp \
+--training_mask 1

@@ -102,7 +102,7 @@ def get_args(description='Disentangled Representation Learning for Text-Video Re
     parser.add_argument('--tmp_trans_num_layers', type=int, default=4)
     parser.add_argument('--interact_mode', type=str, default='FGW')
     
-
+    parser.add_argument('--training_mask', type=int, default=0)
 
 
     args = parser.parse_args()

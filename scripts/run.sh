@@ -18,8 +18,8 @@ main.py \
 --epochs 5 \
 --lr 1e-4 \
 --coef_lr 1e-3 \
---batch_size 64 \
---batch_size_val 64 \
+--batch_size 8 \
+--batch_size_val 128 \
 --anno_path /mnt/bd/cxx-dataset/CLIP4Clip/data/MSRVTT/msrvtt_data \
 --video_path /mnt/bd/cxx-dataset/CLIP4Clip/data/MSRVTT/MSRVTT_Videos \
 --datatype msrvtt \
