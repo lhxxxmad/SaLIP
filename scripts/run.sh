@@ -4,6 +4,8 @@ export PYTHONWARNINGS='ignore:semaphore_tracker:UserWarning'
 # split_hosts=$(echo $ARNOLD_WORKER_HOSTS | tr ":" "\n")
 # split_hosts=($split_hosts)
 
+# git remote set-url <your_url> https://<your_token>@github.com/<username>/<repo>.git
+
 # MSRVTT --do_train 1 \
 CUDA_VISIBLE_DEVICES=0 \
 python3 -m torch.distributed.launch --nproc_per_node=1 \
@@ -26,12 +28,13 @@ main.py \
 --video_framerate 1 \
 --output_dir outputs/msrvtt \
 --embd_mode wti \
---do_gauss 0 \
---interact_mode FGW \
---sal_predictor trans \
---num_props 3
-# --init_model /mnt/bd/cxx-dataset/EMCL-Net/best_outputs/msrvtt/best.bin
-# --base_encoder None \
+--do_gauss 1 \
+--video_mask_rate 0.7 \
+--text_mask_rate 0.7 \
+--temp_loss_weight 1.0 \
+--rec_loss_weight 1.0 \
+--ret_loss_weight 1.0 \
+--sal_predictor ca+mlp \
 
 
 # 
