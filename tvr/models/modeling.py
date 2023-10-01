@@ -582,9 +582,9 @@ class SLIP(nn.Module):
             # 保留mask_rate的token
             if self.training_mask and self.training:
                 print("training mask")
-                _, t_mask = self._mask_feat(text_feat, text_mask.sum(1), text_weight, mask_rate=self.config.text_mask_rate, mode='topk', mask_idx='0')
+                _, t_mask = self._mask_feat(text_feat, text_mask.sum(1), text_weight, mask_rate=self.config.text_mask_rate, mode='dist', mask_idx='0')
                 text_mask = text_mask * t_mask.squeeze(-1)
-                _, v_mask = self._mask_feat(video_feat, video_mask.sum(1), video_weight, mask_rate=self.config.video_mask_rate, mode='topk', mask_idx='0')
+                _, v_mask = self._mask_feat(video_feat, video_mask.sum(1), video_weight, mask_rate=self.config.video_mask_rate, mode='dist', mask_idx='0')
                 video_mask = video_mask * v_mask.squeeze(-1)
                 # pdb.set_trace()
                 
