@@ -579,15 +579,6 @@ class SLIP(nn.Module):
                 # Cross-Attn
                 video_weight = self.video_weight_fc(cross_video_feat).squeeze(2) # B_v x N_v x D -> B_v x N_v
 
-            # 保留mask_rate的token
-            if self.training_mask and self.training:
-                print("training mask")
-                _, t_mask = self._mask_feat(text_feat, text_mask.sum(1), text_weight, mask_rate=self.config.text_mask_rate, mode='dist', mask_idx='0')
-                text_mask = text_mask * t_mask.squeeze(-1)
-                _, v_mask = self._mask_feat(video_feat, video_mask.sum(1), video_weight, mask_rate=self.config.video_mask_rate, mode='dist', mask_idx='0')
-                video_mask = video_mask * v_mask.squeeze(-1)
-                # pdb.set_trace()
-                
             text_weight.masked_fill_(torch.tensor((1 - text_mask), dtype=torch.bool), float("-inf"))
             text_weight = torch.softmax(text_weight, dim=-1)  # B_t x N_t
             # text_weight = torch.sigmoid(text_weight)  # B_t x N_t            
@@ -597,6 +588,21 @@ class SLIP(nn.Module):
             # video_weight = torch.sigmoid(video_weight)  # B_v x N_v
             # ################################################################
 
+            # 保留mask_rate的token
+            if self.training_mask and self.training:
+                print("training mask")
+                _, t_mask = self._mask_feat(text_feat, text_mask.sum(1), text_weight, mask_rate=self.config.text_mask_rate, mode=self.config.mask_mode, mask_idx='0')
+                text_mask = text_mask * t_mask.squeeze(-1)
+                _, v_mask = self._mask_feat(video_feat, video_mask.sum(1), video_weight, mask_rate=self.config.video_mask_rate, mode=self.config.mask_mode, mask_idx='0')
+                video_mask = video_mask * v_mask.squeeze(-1)
+                # pdb.set_trace()
+                text_weight.masked_fill_(torch.tensor((1 - text_mask), dtype=torch.bool), float("-inf"))
+                text_weight = torch.softmax(text_weight, dim=-1)  # B_t x N_t
+                # text_weight = torch.sigmoid(text_weight)  # B_t x N_t            
+
+                video_weight.masked_fill_(torch.tensor((1 - video_mask), dtype=torch.bool), float("-inf"))
+                video_weight = torch.softmax(video_weight, dim=-1)  # B_v x N_v
+                # video_weight = torch.sigmoid(video_weight)  # B_v x N_v
 
             text_feat = text_feat / text_feat.norm(dim=-1, keepdim=True)
             video_feat = video_feat / video_feat.norm(dim=-1, keepdim=True)
