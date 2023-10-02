@@ -35,7 +35,8 @@ main.py \
 --rec_loss_weight 1.0 \
 --ret_loss_weight 1.0 \
 --sal_predictor ca+mlp \
---training_mask 1
+--training_mask 1 \
+--mask_mode topk
 
 
 # 

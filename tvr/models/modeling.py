@@ -235,25 +235,25 @@ class SLIP(nn.Module):
 
             if self.do_gauss:
                 # remove learnable token
-                text_feat = text_feat[:, : -1]
+                # text_feat = text_feat[:, : -1]
                 video_feat = video_feat[:, : -1]
-                text_mask = text_mask[:, : -1]
+                # text_mask = text_mask[:, : -1]
                 video_mask = video_mask[:, : -1]
 
             # rec_text_loss, rec_video_loss , temporal_loss = 0,0,0
-            # rec_video_loss, rec_text_loss = self.get_rec_loss(text_feat, video_feat, text_mask, video_mask, text_weight, video_weight)
+            rec_video_loss, rec_text_loss = self.get_rec_loss(text_feat, video_feat, text_mask, video_mask, text_weight, video_weight)
             # temporal_loss = self.get_temporal_order_loss(text_feat, video_feat, text_mask, video_mask, text_weight, video_weight)
             # moment-text rec
             # rec_mt, rec_tm, div_loss, ivc_loss, rec_ref_loss, rec_neg1_loss, rec_neg2_loss, _ = self.get_moment_text_rec(text_feat, video_feat, text_mask, video_mask, props, text_weight, epoch)
             # rec_mt, rec_tm, div_loss, ivc_loss, rec_ref_loss, rec_neg1_loss, rec_neg2_loss = rec_mt.mean(), rec_tm.mean(), div_loss.mean(), ivc_loss.mean(), rec_ref_loss.mean(), rec_neg1_loss.mean(), rec_neg2_loss.mean()
             # final_loss = self.ret_loss_weight * retrieval_loss + self.rec_loss_weight * (rec_video_loss + rec_text_loss)/2.0 + self.temp_loss_weight * temporal_loss
             # final_loss = self.ret_loss_weight * retrieval_loss + self.rec_loss_weight * (rec_video_loss + rec_text_loss)/2.0 + ivc_loss + rec_mt #+ div_loss + rec_mt * self.lambda1 #( + rec_tm)/2.0
-            final_loss = retrieval_loss
+            final_loss = retrieval_loss + rec_text_loss
 
             final_loss_dict = {'final_loss': final_loss.item(), 
-                                # 'retrieval_loss': self.ret_loss_weight * retrieval_loss.item(), 
+                                'retrieval_loss': self.ret_loss_weight * retrieval_loss.item(), 
                                 # 'rec_video_loss': self.rec_loss_weight * rec_video_loss.item(), 
-                                # 'rec_text_loss': self.rec_loss_weight * rec_text_loss.item(),
+                                'rec_text_loss': self.rec_loss_weight * rec_text_loss.item(),
                                 # 'rec_tm_loss': (self.lambda1 * rec_tm).item(),
                                 # 'div_loss': div_loss.item(),
                                 # 'ivc_loss': ivc_loss.item(),
@@ -559,14 +559,14 @@ class SLIP(nn.Module):
                 # video_weight =  self.video_saliency_fc(cross_video_feat[:,-1])
                 props = torch.sigmoid(self.moment_fc(cross_video_feat[:,-1])).view(-1, 2)
                 cross_video_feat = cross_video_feat[:, : -1]
-                cross_text_feat = cross_text_feat[:, : -1]
+                # cross_text_feat = cross_text_feat[:, : -1]
 
                 text_weight = self.text_weight_fc(cross_text_feat).squeeze(2)  # B_t x N_t x D -> B_t x N_t
                 video_weight = self.video_weight_fc(cross_video_feat).squeeze(2) # B_v x N_v x D -> B_v x N_v
 
-                text_feat = text_feat[:, : -1]
+                # text_feat = text_feat[:, : -1]
                 video_feat = video_feat[:, : -1]
-                text_mask = text_mask[:, : -1]
+                # text_mask = text_mask[:, : -1]
                 video_mask = video_mask[:, : -1]
             else:
                 # MLP
@@ -579,21 +579,13 @@ class SLIP(nn.Module):
                 # Cross-Attn
                 video_weight = self.video_weight_fc(cross_video_feat).squeeze(2) # B_v x N_v x D -> B_v x N_v
 
-            text_weight.masked_fill_(torch.tensor((1 - text_mask), dtype=torch.bool), float("-inf"))
-            text_weight = torch.softmax(text_weight, dim=-1)  # B_t x N_t
-            # text_weight = torch.sigmoid(text_weight)  # B_t x N_t            
-
-            video_weight.masked_fill_(torch.tensor((1 - video_mask), dtype=torch.bool), float("-inf"))
-            video_weight = torch.softmax(video_weight, dim=-1)  # B_v x N_v
-            # video_weight = torch.sigmoid(video_weight)  # B_v x N_v
-            # ################################################################
 
             # 保留mask_rate的token
             if self.training_mask and self.training:
                 print("training mask")
                 # pdb.set_trace()
-                _, t_mask = self._mask_feat(text_feat, text_mask.sum(1), text_weight, mask_rate=self.config.text_mask_rate, mode=self.config.mask_mode, mask_idx='0')
-                text_mask = text_mask * t_mask.squeeze(-1)
+                # _, t_mask = self._mask_feat(text_feat, text_mask.sum(1), text_weight, mask_rate=self.config.text_mask_rate, mode=self.config.mask_mode, mask_idx='0')
+                # text_mask = text_mask * t_mask.squeeze(-1)
                 _, v_mask = self._mask_feat(video_feat, video_mask.sum(1), video_weight, mask_rate=self.config.video_mask_rate, mode=self.config.mask_mode, mask_idx='0')
                 video_mask = video_mask * v_mask.squeeze(-1)
                 
@@ -604,6 +596,15 @@ class SLIP(nn.Module):
                 # video_weight.masked_fill_(torch.tensor((1 - video_mask), dtype=torch.bool), float("-inf"))
                 # video_weight = torch.softmax(video_weight, dim=-1)  # B_v x N_v
                 # # video_weight = torch.sigmoid(video_weight)  # B_v x N_v
+
+            text_weight.masked_fill_(torch.tensor((1 - text_mask), dtype=torch.bool), float("-inf"))
+            text_weight = torch.softmax(text_weight, dim=-1)  # B_t x N_t
+            # text_weight = torch.sigmoid(text_weight)  # B_t x N_t            
+
+            video_weight.masked_fill_(torch.tensor((1 - video_mask), dtype=torch.bool), float("-inf"))
+            video_weight = torch.softmax(video_weight, dim=-1)  # B_v x N_v
+            # video_weight = torch.sigmoid(video_weight)  # B_v x N_v
+            # ################################################################
 
             text_feat = text_feat / text_feat.norm(dim=-1, keepdim=True)
             video_feat = video_feat / video_feat.norm(dim=-1, keepdim=True)
@@ -730,7 +731,8 @@ class SLIP(nn.Module):
 
         bs_pair = text_ids.size(0)
 
-        if gauss:
+        # if gauss:
+        if False:
             text_vec = self.text_vec.view(1, 1, -1).expand(bs_pair, 1, -1).float() #
             # text_ids = torch.cat([text_ids, text_vec], dim=1) #
             mask = torch.zeros(bs_pair).byte().cuda().view(-1,1)
