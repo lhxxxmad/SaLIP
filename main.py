@@ -88,6 +88,7 @@ def get_args(description='Disentangled Representation Learning for Text-Video Re
     parser.add_argument('--ret_loss_weight', type=float, default=1.0)
     parser.add_argument('--video_mask_rate', type=float, default=0.3)
     parser.add_argument('--text_mask_rate', type=float, default=0.3)
+    parser.add_argument('--interaction_mask', type=float, default=0.3)
     ## for Gaussian masks
     parser.add_argument('--do_gauss', type=int, default=0)
     parser.add_argument('--num_props', type=int, default=2)

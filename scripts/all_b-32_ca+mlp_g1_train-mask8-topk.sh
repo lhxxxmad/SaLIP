@@ -46,12 +46,13 @@ main.py \
 --output_dir outputs/activity_ViT-B-32 \
 --embd_mode wti \
 --do_gauss 1 \
---video_mask_rate 0.8 \
---text_mask_rate 0.8 \
+--video_mask_rate 0.1 \
+--text_mask_rate 0.1 \
 --rec_trans_num_layers1 4 \
 --rec_trans_num_layers2 4 \
 --sal_predictor ca+mlp \
 --training_mask 1 \
+--interaction_mask 0.8 \
 --mask_mode topk
 
 
@@ -86,6 +87,7 @@ main.py \
 --tmp_trans_num_layers 4 \
 --sal_predictor ca+mlp \
 --training_mask 1 \
+--interaction_mask 0.8 \
 --mask_mode topk
 
 
@@ -120,6 +122,7 @@ main.py \
 --ret_loss_weight 1.0 \
 --sal_predictor ca+mlp \
 --training_mask 1 \
+--interaction_mask 0.8 \
 --mask_mode topk
 
 
@@ -151,6 +154,7 @@ main.py \
 --text_mask_rate 0.8 \
 --sal_predictor ca+mlp \
 --training_mask 1 \
+--interaction_mask 0.8 \
 --mask_mode topk
 
 
@@ -185,6 +189,7 @@ main.py \
 --ret_loss_weight 1.0 \
 --sal_predictor ca+mlp \
 --training_mask 1 \
+--interaction_mask 0.8 \
 --mask_mode topk
 
 
@@ -220,6 +225,7 @@ main.py \
 --ret_loss_weight 1.0 \
 --sal_predictor ca+mlp \
 --training_mask 1 \
+--interaction_mask 0.8 \
 --mask_mode topk
 
 echo "train lsmdc"
@@ -252,6 +258,7 @@ main.py \
 --rec_trans_num_layers2 4 \
 --sal_predictor ca+mlp \
 --training_mask 1 \
+--interaction_mask 0.8 \
 --mask_mode topk
 
 echo "test lsmdc"
@@ -284,4 +291,5 @@ main.py \
 --rec_trans_num_layers2 4 \
 --sal_predictor ca+mlp \
 --training_mask 1 \
+--interaction_mask 0.8 \
 --mask_mode topk
