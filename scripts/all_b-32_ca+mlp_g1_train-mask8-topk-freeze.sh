@@ -54,6 +54,7 @@ main.py \
 --training_mask 1 \
 --interaction_mask 0.8 \
 --mask_mode topk \
+--freeze_clip 1
 
 
 echo "test anet"
@@ -88,7 +89,8 @@ main.py \
 --sal_predictor ca+mlp \
 --training_mask 1 \
 --interaction_mask 0.8 \
---mask_mode topk
+--mask_mode topk \
+--freeze_clip 1
 
 
 echo "train didemo"
@@ -123,7 +125,8 @@ main.py \
 --sal_predictor ca+mlp \
 --training_mask 1 \
 --interaction_mask 0.8 \
---mask_mode topk
+--mask_mode topk \
+--freeze_clip 1
 
 
 echo "test didemo"
@@ -155,7 +158,8 @@ main.py \
 --sal_predictor ca+mlp \
 --training_mask 1 \
 --interaction_mask 0.8 \
---mask_mode topk
+--mask_mode topk \
+--freeze_clip 1
 
 
 echo "train msrvtt"
@@ -190,7 +194,8 @@ main.py \
 --sal_predictor ca+mlp \
 --training_mask 1 \
 --interaction_mask 0.8 \
---mask_mode topk
+--mask_mode topk \
+--freeze_clip 1
 
 
 
@@ -226,7 +231,8 @@ main.py \
 --sal_predictor ca+mlp \
 --training_mask 1 \
 --interaction_mask 0.8 \
---mask_mode topk
+--mask_mode topk \
+--freeze_clip 1
 
 echo "train lsmdc"
 DATA_PATH=./data/Clip_LSMDC
@@ -259,7 +265,8 @@ main.py \
 --sal_predictor ca+mlp \
 --training_mask 1 \
 --interaction_mask 0.8 \
---mask_mode topk
+--mask_mode topk \
+--freeze_clip 1
 
 echo "test lsmdc"
 CUDA_VISIBLE_DEVICES=0,1,2,3,4,5,6,7 \
@@ -292,4 +299,5 @@ main.py \
 --sal_predictor ca+mlp \
 --training_mask 1 \
 --interaction_mask 0.8 \
---mask_mode topk
+--mask_mode topk \
+--freeze_clip 1
