@@ -106,7 +106,7 @@ def get_args(description='Disentangled Representation Learning for Text-Video Re
     parser.add_argument('--training_mask', type=int, default=0)
     parser.add_argument('--mask_mode', type=str, default='dist')
 
-
+    parser.add_argument('--freeze_clip', type=int, default=0)
     args = parser.parse_args()
 
     return args
