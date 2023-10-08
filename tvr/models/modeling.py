@@ -434,8 +434,8 @@ class SLIP(nn.Module):
 
         # mask_rete 
         # pdb.set_trace()
-        masked_video, masked_vec_video = self._mask_feat(video_feat, video_mask.sum(1), video_weight, mask_rate=self.config.video_mask_rate, mode='topk')
-        masked_text, masked_vec_text = self._mask_feat(text_feat, text_mask.sum(1), text_weight, mask_rate=self.config.text_mask_rate, mode='topk')
+        masked_video, masked_vec_video = self._mask_feat(video_feat, video_mask.sum(1), video_weight, mask_rate=self.config.video_mask_rate, mode='dist')
+        masked_text, masked_vec_text = self._mask_feat(text_feat, text_mask.sum(1), text_weight, mask_rate=self.config.text_mask_rate, mode='dist')
 
         # #  p = random
         # masked_video = self._mask_feat(video_feat, video_mask.sum(1), mask_rate=self.config.video_mask_rate)
@@ -588,6 +588,14 @@ class SLIP(nn.Module):
                 # Cross-Attn
                 video_weight = self.video_weight_fc(cross_video_feat).squeeze(2) # B_v x N_v x D -> B_v x N_v
 
+            text_weight.masked_fill_(torch.tensor((1 - text_mask), dtype=torch.bool), float("-inf"))
+            text_weight = torch.softmax(text_weight, dim=-1)  # B_t x N_t
+            # text_weight = torch.sigmoid(text_weight)  # B_t x N_t            
+
+            video_weight = video_weight.masked_fill(torch.tensor((1 - video_mask), dtype=torch.bool), float("-inf"))
+            video_weight = torch.softmax(video_weight, dim=-1)  # B_v x N_v
+
+            # ################################################################
 
             # 保留mask_rate的token
             if self.training_mask and self.training:
@@ -609,19 +617,7 @@ class SLIP(nn.Module):
             else:
                 video_mask1 = video_mask
                 video_mask2 = video_mask
-
-            text_weight.masked_fill_(torch.tensor((1 - text_mask), dtype=torch.bool), float("-inf"))
-            text_weight = torch.softmax(text_weight, dim=-1)  # B_t x N_t
-            # text_weight = torch.sigmoid(text_weight)  # B_t x N_t            
-
-            video_weight1 = video_weight.masked_fill(torch.tensor((1 - video_mask1), dtype=torch.bool), float("-inf"))
-            video_weight1 = torch.softmax(video_weight1, dim=-1)  # B_v x N_v
-
-            video_weight2 = video_weight.masked_fill(torch.tensor((1 - video_mask2), dtype=torch.bool), float("-inf"))
-            video_weight2 = torch.softmax(video_weight2, dim=-1)  # B_v x N_v
-
-            # ################################################################
-
+                
             text_feat = text_feat / text_feat.norm(dim=-1, keepdim=True)
             video_feat = video_feat / video_feat.norm(dim=-1, keepdim=True)
             cls_feat = cls/cls.norm(dim=-1, keepdim=True)
@@ -641,9 +637,9 @@ class SLIP(nn.Module):
                 t2v_logits2 = torch.einsum('abt,at->ab', [t2v_logits2, text_weight])
 
                 v2t_logits1, max_idx2 = retrieve_logits1.max(dim=-2)  # abtv -> abv
-                v2t_logits1 = torch.einsum('abv,bv->ab', [v2t_logits1, video_weight1])
+                v2t_logits1 = torch.einsum('abv,bv->ab', [v2t_logits1, video_weight])
                 v2t_logits2, max_idx2 = retrieve_logits2.max(dim=-2)  # abtv -> abv
-                v2t_logits2 = torch.einsum('abv,bv->ab', [v2t_logits2, video_weight2])
+                v2t_logits2 = torch.einsum('abv,bv->ab', [v2t_logits2, video_weight])
                 retrieve_logits1 = (t2v_logits1 + v2t_logits1) / 2.0
                 retrieve_logits2 = (t2v_logits2 + v2t_logits2) / 2.0
                 # bsz, frame_len, T = video_feat.shape
