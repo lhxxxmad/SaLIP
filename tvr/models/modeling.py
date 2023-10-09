@@ -133,7 +133,7 @@ class SLIP(nn.Module):
         self.ret_loss_weight = config.ret_loss_weight
         self.training_mask = config.training_mask
         self.margin1 = 0.01
-        self.margin2 = 0.05
+        self.margin2 = 0.01
         self.lambda1 = 0.1
         self.alpha = 0.0
         self.trans = DualTransformer()
@@ -255,15 +255,15 @@ class SLIP(nn.Module):
             # final_loss = self.ret_loss_weight * retrieval_loss + self.rec_loss_weight * (rec_video_loss + rec_text_loss)/2.0 + ivc_loss + rec_mt #+ div_loss + rec_mt * self.lambda1 #( + rec_tm)/2.0
             tmp_0 = torch.zeros_like(retrieval_loss).cuda()
             tmp_0.requires_grad = False        
-            div_loss = torch.max(retrieval_loss - retrieval_loss2 + self.margin2, tmp_0)
-            final_loss = retrieval_loss + div_loss + (rec_video_loss + rec_text_loss)/2.0
+            # div_loss = torch.max(retrieval_loss - retrieval_loss2 + self.margin2, tmp_0)
+            final_loss = retrieval_loss + (rec_video_loss + rec_text_loss)/2.0 #+ div_loss
 
             final_loss_dict = {'final_loss': final_loss.item(), 
                                 'retrieval_loss': retrieval_loss.item(), 
                                 'rec_video_loss': self.rec_loss_weight * rec_video_loss.item(), 
                                 'rec_text_loss': self.rec_loss_weight * rec_text_loss.item(),
                                 # 'rec_tm_loss': (self.lambda1 * rec_tm).item(),
-                                'div_loss': div_loss.item(),
+                                # 'div_loss': div_loss.item(),
                                 # 'ivc_loss': ivc_loss.item(),
                                 # 'rec_mt_loss': rec_mt.item(),
                                 # 'rec_ref_loss':rec_ref_loss.item(),

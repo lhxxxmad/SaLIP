@@ -28,14 +28,14 @@ main.py \
 --video_framerate 1 \
 --output_dir outputs/msrvtt \
 --embd_mode wti \
---do_gauss 1 \
+--do_gauss 0 \
 --video_mask_rate 0.7 \
 --text_mask_rate 0.7 \
 --temp_loss_weight 1.0 \
 --rec_loss_weight 1.0 \
 --ret_loss_weight 1.0 \
 --sal_predictor ca+mlp \
---training_mask 1 \
+--training_mask 0 \
 --mask_mode topk
 
 
