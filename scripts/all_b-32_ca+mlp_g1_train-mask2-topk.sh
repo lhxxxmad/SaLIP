@@ -53,7 +53,7 @@ main.py \
 --sal_predictor ca+mlp \
 --training_mask 1 \
 --interaction_mask 0.2 \
---mask_mode topk
+--mask_mode topk \
 
 
 echo "test anet"
@@ -223,6 +223,70 @@ main.py \
 --temp_loss_weight 1.0 \
 --rec_loss_weight 1.0 \
 --ret_loss_weight 1.0 \
+--sal_predictor ca+mlp \
+--training_mask 1 \
+--interaction_mask 0.2 \
+--mask_mode topk
+
+echo "test msrvtt->didemo"
+CUDA_VISIBLE_DEVICES=0,1,2,3,4,5,6,7 \
+python3 -m torch.distributed.launch --nproc_per_node=8 \
+--master_addr ${ARNOLD_WORKER_0_HOST} \
+--master_port ${ARNOLD_WORKER_0_PORT} \
+main.py \
+--do_eval 1 \
+--workers 8 \
+--n_display 1 \
+--epochs 5 \
+--lr 1e-4 \
+--coef_lr 1e-3 \
+--batch_size 128 \
+--batch_size_val 128 \
+--anno_path ${DATA_PATH}/ \
+--video_path ${DATA_PATH}/videos \
+--datatype didemo \
+--max_words 32 \
+--max_frames 12 \
+--video_framerate 1 \
+--init_model outputs/msrvtt_ViT-B-32/best.bin \
+--output_dir outputs/msrvttTOdidemo_ViT-B-32 \
+--embd_mode wti \
+--do_gauss 1 \
+--video_mask_rate 0.8 \
+--text_mask_rate 0.8 \
+--sal_predictor ca+mlp \
+--training_mask 1 \
+--interaction_mask 0.2 \
+--mask_mode topk
+
+echo "test msrvtt->lsmdc"
+CUDA_VISIBLE_DEVICES=0,1,2,3,4,5,6,7 \
+python3 -m torch.distributed.launch --nproc_per_node=8 \
+--master_addr ${ARNOLD_WORKER_0_HOST} \
+--master_port ${ARNOLD_WORKER_0_PORT} \
+main.py \
+--do_eval 1 \
+--workers 8 \
+--n_display 5 \
+--epochs 5 \
+--lr 1e-4 \
+--coef_lr 1e-3 \
+--batch_size 128 \
+--batch_size_val 128 \
+--anno_path ${DATA_PATH}/ \
+--video_path ${DATA_PATH}/LSMDC_Videos \
+--datatype lsmdc \
+--max_words 32 \
+--max_frames 12 \
+--video_framerate 1 \
+--init_model outputs/msrvtt_ViT-B-32/best.bin \
+--output_dir outputs/msrvtt->lsmdc_ViT-B-32 \
+--embd_mode wti \
+--do_gauss 1 \
+--video_mask_rate 0.8 \
+--text_mask_rate 0.8 \
+--rec_trans_num_layers1 4 \
+--rec_trans_num_layers2 4 \
 --sal_predictor ca+mlp \
 --training_mask 1 \
 --interaction_mask 0.2 \

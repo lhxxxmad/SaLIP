@@ -255,8 +255,8 @@ class SLIP(nn.Module):
             # final_loss = self.ret_loss_weight * retrieval_loss + self.rec_loss_weight * (rec_video_loss + rec_text_loss)/2.0 + ivc_loss + rec_mt #+ div_loss + rec_mt * self.lambda1 #( + rec_tm)/2.0
             tmp_0 = torch.zeros_like(retrieval_loss).cuda()
             tmp_0.requires_grad = False        
-            # div_loss = torch.max(retrieval_loss - retrieval_loss2 + self.margin2, tmp_0)
-            final_loss = retrieval_loss + (rec_video_loss + rec_text_loss)/2.0 #+ div_loss
+            div_loss = torch.max(retrieval_loss - retrieval_loss2 + self.margin2, tmp_0)
+            final_loss = retrieval_loss + (rec_video_loss + rec_text_loss)/2.0 + div_loss
 
             final_loss_dict = {'final_loss': final_loss.item(), 
                                 'retrieval_loss': retrieval_loss.item(), 
