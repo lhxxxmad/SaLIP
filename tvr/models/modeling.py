@@ -840,6 +840,8 @@ class SLIP(nn.Module):
                 choices = np.random.choice(np.arange(l), num_masked_vec, replace=False, p=p)
             elif mode=='topk':
                 choices = torch.topk(weights[i, :l], k=num_masked_vec)[1]
+            elif mode=='mean':
+                choices = torch.where(weights[i, :l] >= weights[i, :l].mean())
             masked_vec[-1][choices] = 1
 
         masked_vec = torch.stack(masked_vec, 0).unsqueeze(-1)
@@ -910,6 +912,13 @@ class SLIP(nn.Module):
             video_feat = self.transformerClip(video_feat, extended_video_mask)
             video_feat = video_feat.permute(1, 0, 2)  # LND -> NLD
             video_feat = video_feat + video_feat_original
+        elif agg_module == 'seq':
+            video_feat_original = video_feat
+            seq_length = video_feat.size(1)
+            position_ids = torch.arange(seq_length, dtype=torch.long, device=video_feat.device)
+            position_ids = position_ids.unsqueeze(0).expand(video_feat.size(0), -1)
+            frame_position_embeddings = self.frame_position_embeddings(position_ids)
+            video_feat = video_feat + frame_position_embeddings
         return video_feat
 
 
