@@ -246,7 +246,7 @@ class SLIP(nn.Module):
                 video_mask = video_mask[:, : -1]
 
             rec_text_loss, rec_video_loss , temporal_loss = 0,0,0
-            rec_video_loss, rec_text_loss = self.get_rec_loss(text_feat, video_feat, text_mask, video_mask, text_weight, video_weight)
+            # rec_video_loss, rec_text_loss = self.get_rec_loss(text_feat, video_feat, text_mask, video_mask, text_weight, video_weight)
             # temporal_loss = self.get_temporal_order_loss(text_feat, video_feat, text_mask, video_mask, text_weight, video_weight)
             # moment-text rec
             # rec_mt, rec_tm, div_loss, ivc_loss, rec_ref_loss, rec_neg1_loss, rec_neg2_loss, _ = self.get_moment_text_rec(text_feat, video_feat, text_mask, video_mask, props, text_weight, epoch)
@@ -256,14 +256,14 @@ class SLIP(nn.Module):
             tmp_0 = torch.zeros_like(retrieval_loss).cuda()
             tmp_0.requires_grad = False        
             div_loss = torch.max(retrieval_loss - retrieval_loss2 + self.margin2, tmp_0)
-            final_loss = retrieval_loss + (rec_video_loss + rec_text_loss)/2.0 + div_loss
+            final_loss = retrieval_loss  + div_loss # + (rec_video_loss + rec_text_loss)/2.0
 
             final_loss_dict = {'final_loss': final_loss.item(), 
                                 'retrieval_loss': retrieval_loss.item(), 
-                                'rec_video_loss': self.rec_loss_weight * rec_video_loss.item(), 
-                                'rec_text_loss': self.rec_loss_weight * rec_text_loss.item(),
+                                # 'rec_video_loss': self.rec_loss_weight * rec_video_loss.item(), 
+                                # 'rec_text_loss': self.rec_loss_weight * rec_text_loss.item(),
                                 # 'rec_tm_loss': (self.lambda1 * rec_tm).item(),
-                                # 'div_loss': div_loss.item(),
+                                'div_loss': div_loss.item(),
                                 # 'ivc_loss': ivc_loss.item(),
                                 # 'rec_mt_loss': rec_mt.item(),
                                 # 'rec_ref_loss':rec_ref_loss.item(),
