@@ -160,7 +160,7 @@ class SLIP(nn.Module):
         cross_config.hidden_size = transformer_width
         self.cross_config = cross_config
             
-        if self.agg_module in ["seqLSTM", "seqTransf"]:
+        if self.agg_module in ["seqLSTM", "seqTransf", "seq"]:
             self.frame_position_embeddings = nn.Embedding(cross_config.max_position_embeddings,
                                                           cross_config.hidden_size)
             if self.agg_module == "seqTransf":
