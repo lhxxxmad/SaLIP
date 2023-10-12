@@ -64,7 +64,7 @@ def get_args(description='Disentangled Representation Learning for Text-Video Re
                         help="The output directory where the model predictions and checkpoints will be written.")
 
     parser.add_argument("--base_encoder", default="ViT-B/32", type=str, help="Choose a CLIP version")
-    parser.add_argument('--agg_module', type=str, default="seqTransf", choices=["None", "seqLSTM", "seqTransf"],
+    parser.add_argument('--agg_module', type=str, default="seqTransf", choices=["None", "seqLSTM", "seqTransf", "seq"],
                         help="choice a feature aggregation module for video.")
     parser.add_argument('--num_hidden_layers', type=int, default=4)
     parser.add_argument('--temp', type=float, default=3)
