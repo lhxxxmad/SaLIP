@@ -624,6 +624,10 @@ class SLIP(nn.Module):
                 
             text_feat = text_feat / text_feat.norm(dim=-1, keepdim=True)
             video_feat = video_feat / video_feat.norm(dim=-1, keepdim=True)
+
+            txt_token = txt_token / txt_token.norm(dim=-1, keepdim=True)
+            vid_token = vid_token / vid_token.norm(dim=-1, keepdim=True)
+
             cls_feat = cls/cls.norm(dim=-1, keepdim=True)
             # 
             retrieve_logits = torch.einsum('atd,bvd->abtv', [text_feat, video_feat])
@@ -646,6 +650,11 @@ class SLIP(nn.Module):
                 v2t_logits2 = torch.einsum('abv,bv->ab', [v2t_logits2, video_weight])
                 retrieve_logits1 = (t2v_logits1 + v2t_logits1) / 2.0
                 retrieve_logits2 = (t2v_logits2 + v2t_logits2) / 2.0
+
+                retrieve_token_logits = torch.einsum('ad,bd->ab', [txt_token, vid_token])
+
+                retrieve_logits1+= retrieve_token_logits*0.1
+
                 # bsz, frame_len, T = video_feat.shape
                 # # props = props.view(bsz*self.num_props, 2)
                 # gauss_center = props[:, 0]
