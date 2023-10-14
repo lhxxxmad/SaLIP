@@ -28,7 +28,7 @@ main.py \
 --video_framerate 1 \
 --output_dir outputs/msrvtt \
 --embd_mode wti \
---do_gauss 0 \
+--do_gauss 1 \
 --video_mask_rate 0.7 \
 --text_mask_rate 0.7 \
 --temp_loss_weight 1.0 \

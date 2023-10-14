@@ -253,17 +253,17 @@ class SLIP(nn.Module):
             # rec_mt, rec_tm, div_loss, ivc_loss, rec_ref_loss, rec_neg1_loss, rec_neg2_loss = rec_mt.mean(), rec_tm.mean(), div_loss.mean(), ivc_loss.mean(), rec_ref_loss.mean(), rec_neg1_loss.mean(), rec_neg2_loss.mean()
             # final_loss = self.ret_loss_weight * retrieval_loss + self.rec_loss_weight * (rec_video_loss + rec_text_loss)/2.0 + self.temp_loss_weight * temporal_loss
             # final_loss = self.ret_loss_weight * retrieval_loss + self.rec_loss_weight * (rec_video_loss + rec_text_loss)/2.0 + ivc_loss + rec_mt #+ div_loss + rec_mt * self.lambda1 #( + rec_tm)/2.0
-            tmp_0 = torch.zeros_like(retrieval_loss).cuda()
-            tmp_0.requires_grad = False        
-            div_loss = torch.max(retrieval_loss - retrieval_loss2 + self.margin2, tmp_0)
-            final_loss = retrieval_loss  + div_loss # + (rec_video_loss + rec_text_loss)/2.0
+            # tmp_0 = torch.zeros_like(retrieval_loss).cuda()
+            # tmp_0.requires_grad = False        
+            # div_loss = torch.max(retrieval_loss - retrieval_loss2 + self.margin2, tmp_0)
+            final_loss = retrieval_loss  #+ div_loss # + (rec_video_loss + rec_text_loss)/2.0
 
             final_loss_dict = {'final_loss': final_loss.item(), 
                                 'retrieval_loss': retrieval_loss.item(), 
                                 # 'rec_video_loss': self.rec_loss_weight * rec_video_loss.item(), 
                                 # 'rec_text_loss': self.rec_loss_weight * rec_text_loss.item(),
                                 # 'rec_tm_loss': (self.lambda1 * rec_tm).item(),
-                                'div_loss': div_loss.item(),
+                                # 'div_loss': div_loss.item(),
                                 # 'ivc_loss': ivc_loss.item(),
                                 # 'rec_mt_loss': rec_mt.item(),
                                 # 'rec_ref_loss':rec_ref_loss.item(),
@@ -572,11 +572,15 @@ class SLIP(nn.Module):
 
                 text_weight = self.text_weight_fc(cross_text_feat).squeeze(2)  # B_t x N_t x D -> B_t x N_t
                 video_weight = self.video_weight_fc(cross_video_feat).squeeze(2) # B_v x N_v x D -> B_v x N_v
-
+                # pdb.set_trace()
+                txt_token = text_feat[:,-1]
+                vid_token = video_feat[:,-1]
+                
                 text_feat = text_feat[:, : -1]
                 video_feat = video_feat[:, : -1]
                 text_mask = text_mask[:, : -1]
                 video_mask = video_mask[:, : -1]
+
             else:
                 # MLP
                 # text_weight = self.text_weight_fc(text_feat).squeeze(2)  # B_t x N_t x D -> B_t x N_t
