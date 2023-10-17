@@ -600,8 +600,8 @@ class SLIP(nn.Module):
             video_weight = torch.softmax(video_weight, dim=-1)  # B_v x N_v
 
             # 保留mask_rate的token
-            if self.training_mask and self.training:
-                print("training mask")
+            if self.training_mask:
+                # print("training mask")
                 # pdb.set_trace()
                 # _, t_mask = self._mask_feat(text_feat, text_mask.sum(1), text_weight, mask_rate=self.config.text_mask_rate, mode=self.config.mask_mode, mask_idx='0')
                 # text_mask = text_mask * t_mask.squeeze(-1)
