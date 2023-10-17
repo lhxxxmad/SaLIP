@@ -335,14 +335,14 @@ class EMCL4QA(EMCL4QAPreTrainedModel):
             # logits2 = self.get_cl_output2(text_feat, video_feat, attention_mask, video_mask)
             # logits2, loss2 = self.calc_loss(logits2, labels)
 
-            loss = loss1+ sim_loss
+            loss = loss1 #+ sim_loss
             
             return loss
         else:
             logits1 = self.get_cl_output1(text_feat, video_feat, attention_mask, video_mask)
 
-            logits2 = self.get_cl_output2(text_feat, video_feat, attention_mask, video_mask)
-            return logits1 + logits2
+            # logits2 = self.get_cl_output2(text_feat, video_feat, attention_mask, video_mask)
+            return logits1 #+ logits2
 
     def calc_loss(self, logits, labels):
         if labels is not None:
