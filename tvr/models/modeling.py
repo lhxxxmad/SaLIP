@@ -599,8 +599,6 @@ class SLIP(nn.Module):
             video_weight = video_weight.masked_fill(torch.tensor((1 - video_mask), dtype=torch.bool), float("-inf"))
             video_weight = torch.softmax(video_weight, dim=-1)  # B_v x N_v
 
-            # ################################################################
-
             # 保留mask_rate的token
             if self.training_mask and self.training:
                 print("training mask")
@@ -621,6 +619,17 @@ class SLIP(nn.Module):
             else:
                 video_mask1 = video_mask
                 video_mask2 = video_mask
+
+            # text_weight.masked_fill_(torch.tensor((1 - text_mask), dtype=torch.bool), float("-inf"))
+            # text_weight = torch.softmax(text_weight, dim=-1)  # B_t x N_t
+            # text_weight = torch.sigmoid(text_weight)  # B_t x N_t            
+
+            video_weight1 = video_weight.masked_fill(torch.tensor((1 - video_mask1), dtype=torch.bool), float("-inf"))
+            video_weight1 = torch.softmax(video_weight, dim=-1)  # B_v x N_v
+            video_weight2 = video_weight.masked_fill(torch.tensor((1 - video_mask2), dtype=torch.bool), float("-inf"))
+            video_weight2 = torch.softmax(video_weight, dim=-1)  # B_v x N_v
+
+            # ################################################################
                 
             text_feat = text_feat / text_feat.norm(dim=-1, keepdim=True)
             video_feat = video_feat / video_feat.norm(dim=-1, keepdim=True)
@@ -632,6 +641,7 @@ class SLIP(nn.Module):
             # 
             retrieve_logits = torch.einsum('atd,bvd->abtv', [text_feat, video_feat])
             retrieve_logits = torch.einsum('abtv,at->abtv', [retrieve_logits, text_mask])
+            retrieve_logits0 = torch.einsum('abtv,bv->abtv', [retrieve_logits, video_mask.squeeze(-1)])
             retrieve_logits1 = torch.einsum('abtv,bv->abtv', [retrieve_logits, video_mask1.squeeze(-1)])
             retrieve_logits2 = torch.einsum('abtv,bv->abtv', [retrieve_logits, video_mask2.squeeze(-1)])
             text_sum = text_mask.sum(-1)
@@ -639,21 +649,29 @@ class SLIP(nn.Module):
 
             if self.interact_mode == 'FGW':
                 # weighted token-wise interaction
+                t2v_logits0, max_idx1 = retrieve_logits0.max(dim=-1)  # abtv -> abt
+                t2v_logits0 = torch.einsum('abt,at->ab', [t2v_logits0, text_weight])
                 t2v_logits1, max_idx1 = retrieve_logits1.max(dim=-1)  # abtv -> abt
                 t2v_logits1 = torch.einsum('abt,at->ab', [t2v_logits1, text_weight])
                 t2v_logits2, max_idx1 = retrieve_logits2.max(dim=-1)  # abtv -> abt
                 t2v_logits2 = torch.einsum('abt,at->ab', [t2v_logits2, text_weight])
 
+                v2t_logits0, max_idx2 = retrieve_logits0.max(dim=-2)  # abtv -> abv
+                v2t_logits0 = torch.einsum('abv,bv->ab', [v2t_logits0, video_weight])
                 v2t_logits1, max_idx2 = retrieve_logits1.max(dim=-2)  # abtv -> abv
-                v2t_logits1 = torch.einsum('abv,bv->ab', [v2t_logits1, video_weight])
+                v2t_logits1 = torch.einsum('abv,bv->ab', [v2t_logits1, video_weight1])
                 v2t_logits2, max_idx2 = retrieve_logits2.max(dim=-2)  # abtv -> abv
-                v2t_logits2 = torch.einsum('abv,bv->ab', [v2t_logits2, video_weight])
+                v2t_logits2 = torch.einsum('abv,bv->ab', [v2t_logits2, video_weight2])
+
+                retrieve_logits0 = (t2v_logits0 + v2t_logits0) / 2.0
                 retrieve_logits1 = (t2v_logits1 + v2t_logits1) / 2.0
                 retrieve_logits2 = (t2v_logits2 + v2t_logits2) / 2.0
+                
+                rate = 0.6
+                retrieve_logits = retrieve_logits0 * rate+ retrieve_logits1 * (1-rate)
+                # retrieve_token_logits = torch.einsum('ad,bd->ab', [txt_token, vid_token])
 
-                retrieve_token_logits = torch.einsum('ad,bd->ab', [txt_token, vid_token])
-
-                retrieve_logits1+= retrieve_token_logits*0.1
+                # retrieve_logits1+= retrieve_token_logits*0.1
 
                 # bsz, frame_len, T = video_feat.shape
                 # # props = props.view(bsz*self.num_props, 2)
@@ -696,7 +714,7 @@ class SLIP(nn.Module):
                 video_feat = torch.sum(video_feat, dim=1) / (video_sum.unsqueeze(1))
                 retrieve_logits = torch.einsum('ad,bd->ab', [text_feat, video_feat])
                 
-        return retrieve_logits1, retrieve_logits1.T, retrieve_logits2, retrieve_logits2.T, text_weight, video_weight, props
+        return retrieve_logits, retrieve_logits.T, retrieve_logits2, retrieve_logits2.T, text_weight, video_weight, props
         # return retrieve_logits, retrieve_logits.T, props
 
     def RelaxedWordMoverSimilarity(self, x1, mask1, x2, mask2):
