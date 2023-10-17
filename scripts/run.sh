@@ -20,8 +20,8 @@ main.py \
 --coef_lr 1e-3 \
 --batch_size 8 \
 --batch_size_val 128 \
---anno_path /mnt/bd/cxx-dataset/CLIP4Clip/data/MSRVTT/msrvtt_data \
---video_path /mnt/bd/cxx-dataset/CLIP4Clip/data/MSRVTT/MSRVTT_Videos \
+--anno_path /mnt/bd/cxx-dataset/CLIP4Clip_original/data/MSRVTT/msrvtt_data \
+--video_path /mnt/bd/cxx-dataset/CLIP4Clip_original/data/MSRVTT/MSRVTT_Videos \
 --datatype msrvtt \
 --max_words 32 \
 --max_frames 12 \
@@ -35,7 +35,7 @@ main.py \
 --rec_loss_weight 1.0 \
 --ret_loss_weight 1.0 \
 --sal_predictor ca+mlp \
---training_mask 0 \
+--training_mask 1 \
 --mask_mode mean
 
 

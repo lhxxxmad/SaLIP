@@ -1,0 +1,318 @@
+2023-10-14 20:21:22,291:INFO: Effective parameters:
+2023-10-14 20:21:22,291:INFO:   <<< K: 16
+2023-10-14 20:21:22,291:INFO:   <<< batch_size: 32
+2023-10-14 20:21:22,291:INFO:   <<< batch_size_val: 16
+2023-10-14 20:21:22,291:INFO:   <<< beta: 1
+2023-10-14 20:21:22,291:INFO:   <<< cache_dir: 
+2023-10-14 20:21:22,291:INFO:   <<< coef_lr: 0.001
+2023-10-14 20:21:22,291:INFO:   <<< cross_model: cross-base
+2023-10-14 20:21:22,291:INFO:   <<< cross_num_hidden_layers: 4
+2023-10-14 20:21:22,291:INFO:   <<< data_path: data/MSRVTT/train_ans2label.json
+2023-10-14 20:21:22,291:INFO:   <<< datatype: msrvtt
+2023-10-14 20:21:22,291:INFO:   <<< do_eval: False
+2023-10-14 20:21:22,291:INFO:   <<< do_lower_case: False
+2023-10-14 20:21:22,291:INFO:   <<< do_pretrain: False
+2023-10-14 20:21:22,291:INFO:   <<< do_train: True
+2023-10-14 20:21:22,291:INFO:   <<< epochs: 5
+2023-10-14 20:21:22,291:INFO:   <<< eval_frame_order: 0
+2023-10-14 20:21:22,291:INFO:   <<< expand_msrvtt_sentences: True
+2023-10-14 20:21:22,291:INFO:   <<< feature_framerate: 1
+2023-10-14 20:21:22,291:INFO:   <<< features_path: /mnt/bd/dataset0131/MSRVTT/all_videos
+2023-10-14 20:21:22,291:INFO:   <<< fp16: False
+2023-10-14 20:21:22,292:INFO:   <<< fp16_opt_level: O1
+2023-10-14 20:21:22,292:INFO:   <<< freeze_layer_num: 0
+2023-10-14 20:21:22,292:INFO:   <<< gradient_accumulation_steps: 1
+2023-10-14 20:21:22,292:INFO:   <<< hard_negative_rate: 0.5
+2023-10-14 20:21:22,292:INFO:   <<< init_model: None
+2023-10-14 20:21:22,292:INFO:   <<< lamd: 1
+2023-10-14 20:21:22,292:INFO:   <<< linear_patch: 2d
+2023-10-14 20:21:22,292:INFO:   <<< local_rank: 0
+2023-10-14 20:21:22,292:INFO:   <<< loose_type: True
+2023-10-14 20:21:22,292:INFO:   <<< loss: CrossEn
+2023-10-14 20:21:22,292:INFO:   <<< lr: 0.0001
+2023-10-14 20:21:22,292:INFO:   <<< lr_decay: 0.9
+2023-10-14 20:21:22,292:INFO:   <<< margin: 0.1
+2023-10-14 20:21:22,292:INFO:   <<< max_frames: 12
+2023-10-14 20:21:22,292:INFO:   <<< max_words: 32
+2023-10-14 20:21:22,292:INFO:   <<< momentum: 0.9
+2023-10-14 20:21:22,292:INFO:   <<< n_display: 50
+2023-10-14 20:21:22,292:INFO:   <<< n_gpu: 1
+2023-10-14 20:21:22,292:INFO:   <<< n_pair: 1
+2023-10-14 20:21:22,292:INFO:   <<< negative_weighting: 1
+2023-10-14 20:21:22,292:INFO:   <<< num_labels: 1000
+2023-10-14 20:21:22,292:INFO:   <<< num_thread_reader: 8
+2023-10-14 20:21:22,292:INFO:   <<< output_dir: ckpts/msrvtt_qa_2
+2023-10-14 20:21:22,292:INFO:   <<< rank: 0
+2023-10-14 20:21:22,292:INFO:   <<< sampled_use_mil: False
+2023-10-14 20:21:22,292:INFO:   <<< seed: 42
+2023-10-14 20:21:22,292:INFO:   <<< sim_header: meanP
+2023-10-14 20:21:22,292:INFO:   <<< slice_framepos: 2
+2023-10-14 20:21:22,292:INFO:   <<< stage_num: 5
+2023-10-14 20:21:22,292:INFO:   <<< task_type: retrieval
+2023-10-14 20:21:22,292:INFO:   <<< text_num_hidden_layers: 12
+2023-10-14 20:21:22,292:INFO:   <<< train_csv: data/MSRVTT/train.jsonl
+2023-10-14 20:21:22,292:INFO:   <<< train_frame_order: 0
+2023-10-14 20:21:22,293:INFO:   <<< use_mil: False
+2023-10-14 20:21:22,293:INFO:   <<< val_csv: data/MSRVTT/test.jsonl
+2023-10-14 20:21:22,293:INFO:   <<< video_dim: 1024
+2023-10-14 20:21:22,293:INFO:   <<< visual_num_hidden_layers: 12
+2023-10-14 20:21:22,293:INFO:   <<< warmup_proportion: 0.1
+2023-10-14 20:21:22,293:INFO:   <<< world_size: 1
+2023-10-14 20:21:22,293:INFO: device: cuda:0 n_gpu: 1
+2023-10-16 12:09:43,754:INFO: Effective parameters:
+2023-10-16 12:09:43,756:INFO:   <<< K: 16
+2023-10-16 12:09:43,756:INFO:   <<< batch_size: 64
+2023-10-16 12:09:43,756:INFO:   <<< batch_size_val: 16
+2023-10-16 12:09:43,756:INFO:   <<< beta: 1
+2023-10-16 12:09:43,756:INFO:   <<< cache_dir: 
+2023-10-16 12:09:43,756:INFO:   <<< coef_lr: 0.001
+2023-10-16 12:09:43,756:INFO:   <<< cross_model: cross-base
+2023-10-16 12:09:43,756:INFO:   <<< cross_num_hidden_layers: 4
+2023-10-16 12:09:43,756:INFO:   <<< data_path: data/MSRVTT/train_ans2label.json
+2023-10-16 12:09:43,756:INFO:   <<< datatype: msrvtt
+2023-10-16 12:09:43,756:INFO:   <<< do_eval: False
+2023-10-16 12:09:43,756:INFO:   <<< do_lower_case: False
+2023-10-16 12:09:43,756:INFO:   <<< do_pretrain: False
+2023-10-16 12:09:43,756:INFO:   <<< do_train: True
+2023-10-16 12:09:43,756:INFO:   <<< epochs: 5
+2023-10-16 12:09:43,756:INFO:   <<< eval_frame_order: 0
+2023-10-16 12:09:43,757:INFO:   <<< expand_msrvtt_sentences: True
+2023-10-16 12:09:43,757:INFO:   <<< feature_framerate: 1
+2023-10-16 12:09:43,757:INFO:   <<< features_path: /mnt/bd/dataset0131/MSRVTT/all_videos
+2023-10-16 12:09:43,757:INFO:   <<< fp16: False
+2023-10-16 12:09:43,757:INFO:   <<< fp16_opt_level: O1
+2023-10-16 12:09:43,757:INFO:   <<< freeze_layer_num: 0
+2023-10-16 12:09:43,757:INFO:   <<< gradient_accumulation_steps: 1
+2023-10-16 12:09:43,757:INFO:   <<< hard_negative_rate: 0.5
+2023-10-16 12:09:43,757:INFO:   <<< init_model: None
+2023-10-16 12:09:43,757:INFO:   <<< lamd: 1
+2023-10-16 12:09:43,757:INFO:   <<< linear_patch: 2d
+2023-10-16 12:09:43,757:INFO:   <<< local_rank: 0
+2023-10-16 12:09:43,757:INFO:   <<< loose_type: True
+2023-10-16 12:09:43,757:INFO:   <<< loss: CrossEn
+2023-10-16 12:09:43,757:INFO:   <<< lr: 0.0001
+2023-10-16 12:09:43,757:INFO:   <<< lr_decay: 0.9
+2023-10-16 12:09:43,757:INFO:   <<< margin: 0.1
+2023-10-16 12:09:43,757:INFO:   <<< max_frames: 12
+2023-10-16 12:09:43,757:INFO:   <<< max_words: 32
+2023-10-16 12:09:43,757:INFO:   <<< momentum: 0.9
+2023-10-16 12:09:43,757:INFO:   <<< n_display: 50
+2023-10-16 12:09:43,757:INFO:   <<< n_gpu: 1
+2023-10-16 12:09:43,757:INFO:   <<< n_pair: 1
+2023-10-16 12:09:43,757:INFO:   <<< negative_weighting: 1
+2023-10-16 12:09:43,757:INFO:   <<< num_labels: 1000
+2023-10-16 12:09:43,757:INFO:   <<< num_thread_reader: 8
+2023-10-16 12:09:43,757:INFO:   <<< output_dir: ckpts/msrvtt_qa_2
+2023-10-16 12:09:43,757:INFO:   <<< rank: 0
+2023-10-16 12:09:43,758:INFO:   <<< sampled_use_mil: False
+2023-10-16 12:09:43,758:INFO:   <<< seed: 42
+2023-10-16 12:09:43,758:INFO:   <<< sim_header: meanP
+2023-10-16 12:09:43,758:INFO:   <<< slice_framepos: 2
+2023-10-16 12:09:43,758:INFO:   <<< stage_num: 5
+2023-10-16 12:09:43,758:INFO:   <<< task_type: retrieval
+2023-10-16 12:09:43,758:INFO:   <<< text_num_hidden_layers: 12
+2023-10-16 12:09:43,758:INFO:   <<< train_csv: data/MSRVTT/train.jsonl
+2023-10-16 12:09:43,758:INFO:   <<< train_frame_order: 0
+2023-10-16 12:09:43,758:INFO:   <<< use_mil: False
+2023-10-16 12:09:43,758:INFO:   <<< val_csv: data/MSRVTT/test.jsonl
+2023-10-16 12:09:43,758:INFO:   <<< video_dim: 1024
+2023-10-16 12:09:43,758:INFO:   <<< visual_num_hidden_layers: 12
+2023-10-16 12:09:43,758:INFO:   <<< warmup_proportion: 0.1
+2023-10-16 12:09:43,758:INFO:   <<< world_size: 1
+2023-10-16 12:09:43,758:INFO: device: cuda:0 n_gpu: 1
+2023-10-16 12:09:50,030:WARNING: Stage-One:True, Stage-Two:False
+2023-10-16 12:09:50,030:WARNING: Test retrieval by loose type.
+2023-10-16 12:09:50,031:WARNING: 	 embed_dim: 512
+2023-10-16 12:09:50,031:WARNING: 	 image_resolution: 224
+2023-10-16 12:09:50,031:WARNING: 	 vision_layers: 12
+2023-10-16 12:09:50,031:WARNING: 	 vision_width: 768
+2023-10-16 12:09:50,031:WARNING: 	 vision_patch_size: 16
+2023-10-16 12:09:50,031:WARNING: 	 context_length: 77
+2023-10-16 12:09:50,031:WARNING: 	 vocab_size: 49408
+2023-10-16 12:09:50,031:WARNING: 	 transformer_width: 512
+2023-10-16 12:09:50,031:WARNING: 	 transformer_heads: 8
+2023-10-16 12:09:50,031:WARNING: 	 transformer_layers: 12
+2023-10-16 12:09:50,031:WARNING: 		 linear_patch: 2d
+2023-10-16 12:09:50,031:WARNING: 	 cut_top_layer: 0
+2023-10-16 12:10:06,099:INFO: ***** Running test *****
+2023-10-16 12:10:06,099:INFO:   Num examples = 67770
+2023-10-16 12:10:06,099:INFO:   Batch size = 16
+2023-10-16 12:10:06,099:INFO:   Num steps = 4236
+2023-10-16 12:10:06,099:INFO: ***** Running val *****
+2023-10-16 12:10:06,099:INFO:   Num examples = 67770
+2023-10-16 12:10:06,979:INFO: ***** Running training *****
+2023-10-16 12:10:06,980:INFO:   Num examples = 149075
+2023-10-16 12:10:06,980:INFO:   Batch size = 64
+2023-10-16 12:10:06,980:INFO:   Num steps = 11645
+2023-10-16 12:12:26,785:INFO: Effective parameters:
+2023-10-16 12:12:26,785:INFO:   <<< K: 16
+2023-10-16 12:12:26,785:INFO:   <<< batch_size: 4
+2023-10-16 12:12:26,785:INFO:   <<< batch_size_val: 16
+2023-10-16 12:12:26,785:INFO:   <<< beta: 1
+2023-10-16 12:12:26,785:INFO:   <<< cache_dir: 
+2023-10-16 12:12:26,785:INFO:   <<< coef_lr: 0.001
+2023-10-16 12:12:26,785:INFO:   <<< cross_model: cross-base
+2023-10-16 12:12:26,786:INFO:   <<< cross_num_hidden_layers: 4
+2023-10-16 12:12:26,786:INFO:   <<< data_path: data/MSRVTT/train_ans2label.json
+2023-10-16 12:12:26,786:INFO:   <<< datatype: msrvtt
+2023-10-16 12:12:26,786:INFO:   <<< do_eval: False
+2023-10-16 12:12:26,786:INFO:   <<< do_lower_case: False
+2023-10-16 12:12:26,786:INFO:   <<< do_pretrain: False
+2023-10-16 12:12:26,786:INFO:   <<< do_train: True
+2023-10-16 12:12:26,786:INFO:   <<< epochs: 5
+2023-10-16 12:12:26,786:INFO:   <<< eval_frame_order: 0
+2023-10-16 12:12:26,786:INFO:   <<< expand_msrvtt_sentences: True
+2023-10-16 12:12:26,786:INFO:   <<< feature_framerate: 1
+2023-10-16 12:12:26,786:INFO:   <<< features_path: /mnt/bd/dataset0131/MSRVTT/all_videos
+2023-10-16 12:12:26,786:INFO:   <<< fp16: False
+2023-10-16 12:12:26,786:INFO:   <<< fp16_opt_level: O1
+2023-10-16 12:12:26,786:INFO:   <<< freeze_layer_num: 0
+2023-10-16 12:12:26,786:INFO:   <<< gradient_accumulation_steps: 1
+2023-10-16 12:12:26,786:INFO:   <<< hard_negative_rate: 0.5
+2023-10-16 12:12:26,786:INFO:   <<< init_model: None
+2023-10-16 12:12:26,786:INFO:   <<< lamd: 1
+2023-10-16 12:12:26,786:INFO:   <<< linear_patch: 2d
+2023-10-16 12:12:26,786:INFO:   <<< local_rank: 0
+2023-10-16 12:12:26,786:INFO:   <<< loose_type: True
+2023-10-16 12:12:26,786:INFO:   <<< loss: CrossEn
+2023-10-16 12:12:26,786:INFO:   <<< lr: 0.0001
+2023-10-16 12:12:26,786:INFO:   <<< lr_decay: 0.9
+2023-10-16 12:12:26,786:INFO:   <<< margin: 0.1
+2023-10-16 12:12:26,786:INFO:   <<< max_frames: 12
+2023-10-16 12:12:26,786:INFO:   <<< max_words: 32
+2023-10-16 12:12:26,787:INFO:   <<< momentum: 0.9
+2023-10-16 12:12:26,787:INFO:   <<< n_display: 50
+2023-10-16 12:12:26,787:INFO:   <<< n_gpu: 1
+2023-10-16 12:12:26,787:INFO:   <<< n_pair: 1
+2023-10-16 12:12:26,787:INFO:   <<< negative_weighting: 1
+2023-10-16 12:12:26,787:INFO:   <<< num_labels: 1000
+2023-10-16 12:12:26,787:INFO:   <<< num_thread_reader: 8
+2023-10-16 12:12:26,787:INFO:   <<< output_dir: ckpts/msrvtt_qa_2
+2023-10-16 12:12:26,787:INFO:   <<< rank: 0
+2023-10-16 12:12:26,787:INFO:   <<< sampled_use_mil: False
+2023-10-16 12:12:26,787:INFO:   <<< seed: 42
+2023-10-16 12:12:26,787:INFO:   <<< sim_header: meanP
+2023-10-16 12:12:26,787:INFO:   <<< slice_framepos: 2
+2023-10-16 12:12:26,787:INFO:   <<< stage_num: 5
+2023-10-16 12:12:26,787:INFO:   <<< task_type: retrieval
+2023-10-16 12:12:26,787:INFO:   <<< text_num_hidden_layers: 12
+2023-10-16 12:12:26,787:INFO:   <<< train_csv: data/MSRVTT/train.jsonl
+2023-10-16 12:12:26,787:INFO:   <<< train_frame_order: 0
+2023-10-16 12:12:26,787:INFO:   <<< use_mil: False
+2023-10-16 12:12:26,787:INFO:   <<< val_csv: data/MSRVTT/test.jsonl
+2023-10-16 12:12:26,787:INFO:   <<< video_dim: 1024
+2023-10-16 12:12:26,787:INFO:   <<< visual_num_hidden_layers: 12
+2023-10-16 12:12:26,787:INFO:   <<< warmup_proportion: 0.1
+2023-10-16 12:12:26,787:INFO:   <<< world_size: 1
+2023-10-16 12:12:26,788:INFO: device: cuda:0 n_gpu: 1
+2023-10-16 12:12:28,602:WARNING: Stage-One:True, Stage-Two:False
+2023-10-16 12:12:28,602:WARNING: Test retrieval by loose type.
+2023-10-16 12:12:28,603:WARNING: 	 embed_dim: 512
+2023-10-16 12:12:28,604:WARNING: 	 image_resolution: 224
+2023-10-16 12:12:28,604:WARNING: 	 vision_layers: 12
+2023-10-16 12:12:28,604:WARNING: 	 vision_width: 768
+2023-10-16 12:12:28,604:WARNING: 	 vision_patch_size: 16
+2023-10-16 12:12:28,604:WARNING: 	 context_length: 77
+2023-10-16 12:12:28,604:WARNING: 	 vocab_size: 49408
+2023-10-16 12:12:28,604:WARNING: 	 transformer_width: 512
+2023-10-16 12:12:28,604:WARNING: 	 transformer_heads: 8
+2023-10-16 12:12:28,604:WARNING: 	 transformer_layers: 12
+2023-10-16 12:12:28,604:WARNING: 		 linear_patch: 2d
+2023-10-16 12:12:28,604:WARNING: 	 cut_top_layer: 0
+2023-10-16 12:12:46,031:INFO: ***** Running test *****
+2023-10-16 12:12:46,031:INFO:   Num examples = 67770
+2023-10-16 12:12:46,031:INFO:   Batch size = 16
+2023-10-16 12:12:46,031:INFO:   Num steps = 4236
+2023-10-16 12:12:46,032:INFO: ***** Running val *****
+2023-10-16 12:12:46,032:INFO:   Num examples = 67770
+2023-10-16 12:12:47,027:INFO: ***** Running training *****
+2023-10-16 12:12:47,028:INFO:   Num examples = 149075
+2023-10-16 12:12:47,028:INFO:   Batch size = 4
+2023-10-16 12:12:47,028:INFO:   Num steps = 186340
+2023-10-16 12:13:32,283:INFO: Effective parameters:
+2023-10-16 12:13:32,283:INFO:   <<< K: 16
+2023-10-16 12:13:32,284:INFO:   <<< batch_size: 4
+2023-10-16 12:13:32,284:INFO:   <<< batch_size_val: 16
+2023-10-16 12:13:32,284:INFO:   <<< beta: 1
+2023-10-16 12:13:32,284:INFO:   <<< cache_dir: 
+2023-10-16 12:13:32,284:INFO:   <<< coef_lr: 0.001
+2023-10-16 12:13:32,284:INFO:   <<< cross_model: cross-base
+2023-10-16 12:13:32,284:INFO:   <<< cross_num_hidden_layers: 4
+2023-10-16 12:13:32,284:INFO:   <<< data_path: data/MSRVTT/train_ans2label.json
+2023-10-16 12:13:32,284:INFO:   <<< datatype: msrvtt
+2023-10-16 12:13:32,284:INFO:   <<< do_eval: False
+2023-10-16 12:13:32,284:INFO:   <<< do_lower_case: False
+2023-10-16 12:13:32,284:INFO:   <<< do_pretrain: False
+2023-10-16 12:13:32,284:INFO:   <<< do_train: True
+2023-10-16 12:13:32,284:INFO:   <<< epochs: 5
+2023-10-16 12:13:32,284:INFO:   <<< eval_frame_order: 0
+2023-10-16 12:13:32,284:INFO:   <<< expand_msrvtt_sentences: True
+2023-10-16 12:13:32,284:INFO:   <<< feature_framerate: 1
+2023-10-16 12:13:32,284:INFO:   <<< features_path: /mnt/bd/dataset0131/MSRVTT/all_videos
+2023-10-16 12:13:32,284:INFO:   <<< fp16: False
+2023-10-16 12:13:32,284:INFO:   <<< fp16_opt_level: O1
+2023-10-16 12:13:32,284:INFO:   <<< freeze_layer_num: 0
+2023-10-16 12:13:32,284:INFO:   <<< gradient_accumulation_steps: 1
+2023-10-16 12:13:32,284:INFO:   <<< hard_negative_rate: 0.5
+2023-10-16 12:13:32,285:INFO:   <<< init_model: None
+2023-10-16 12:13:32,285:INFO:   <<< lamd: 1
+2023-10-16 12:13:32,285:INFO:   <<< linear_patch: 2d
+2023-10-16 12:13:32,285:INFO:   <<< local_rank: 0
+2023-10-16 12:13:32,285:INFO:   <<< loose_type: True
+2023-10-16 12:13:32,285:INFO:   <<< loss: CrossEn
+2023-10-16 12:13:32,285:INFO:   <<< lr: 0.0001
+2023-10-16 12:13:32,285:INFO:   <<< lr_decay: 0.9
+2023-10-16 12:13:32,285:INFO:   <<< margin: 0.1
+2023-10-16 12:13:32,285:INFO:   <<< max_frames: 12
+2023-10-16 12:13:32,285:INFO:   <<< max_words: 32
+2023-10-16 12:13:32,285:INFO:   <<< momentum: 0.9
+2023-10-16 12:13:32,285:INFO:   <<< n_display: 50
+2023-10-16 12:13:32,285:INFO:   <<< n_gpu: 1
+2023-10-16 12:13:32,285:INFO:   <<< n_pair: 1
+2023-10-16 12:13:32,285:INFO:   <<< negative_weighting: 1
+2023-10-16 12:13:32,285:INFO:   <<< num_labels: 1000
+2023-10-16 12:13:32,285:INFO:   <<< num_thread_reader: 8
+2023-10-16 12:13:32,285:INFO:   <<< output_dir: ckpts/msrvtt_qa_2
+2023-10-16 12:13:32,285:INFO:   <<< rank: 0
+2023-10-16 12:13:32,285:INFO:   <<< sampled_use_mil: False
+2023-10-16 12:13:32,285:INFO:   <<< seed: 42
+2023-10-16 12:13:32,285:INFO:   <<< sim_header: meanP
+2023-10-16 12:13:32,285:INFO:   <<< slice_framepos: 2
+2023-10-16 12:13:32,285:INFO:   <<< stage_num: 5
+2023-10-16 12:13:32,286:INFO:   <<< task_type: retrieval
+2023-10-16 12:13:32,286:INFO:   <<< text_num_hidden_layers: 12
+2023-10-16 12:13:32,286:INFO:   <<< train_csv: data/MSRVTT/train.jsonl
+2023-10-16 12:13:32,286:INFO:   <<< train_frame_order: 0
+2023-10-16 12:13:32,286:INFO:   <<< use_mil: False
+2023-10-16 12:13:32,286:INFO:   <<< val_csv: data/MSRVTT/test.jsonl
+2023-10-16 12:13:32,286:INFO:   <<< video_dim: 1024
+2023-10-16 12:13:32,286:INFO:   <<< visual_num_hidden_layers: 12
+2023-10-16 12:13:32,286:INFO:   <<< warmup_proportion: 0.1
+2023-10-16 12:13:32,286:INFO:   <<< world_size: 1
+2023-10-16 12:13:32,286:INFO: device: cuda:0 n_gpu: 1
+2023-10-16 12:13:34,294:WARNING: Stage-One:True, Stage-Two:False
+2023-10-16 12:13:34,295:WARNING: Test retrieval by loose type.
+2023-10-16 12:13:34,295:WARNING: 	 embed_dim: 512
+2023-10-16 12:13:34,295:WARNING: 	 image_resolution: 224
+2023-10-16 12:13:34,295:WARNING: 	 vision_layers: 12
+2023-10-16 12:13:34,295:WARNING: 	 vision_width: 768
+2023-10-16 12:13:34,295:WARNING: 	 vision_patch_size: 16
+2023-10-16 12:13:34,295:WARNING: 	 context_length: 77
+2023-10-16 12:13:34,295:WARNING: 	 vocab_size: 49408
+2023-10-16 12:13:34,295:WARNING: 	 transformer_width: 512
+2023-10-16 12:13:34,295:WARNING: 	 transformer_heads: 8
+2023-10-16 12:13:34,295:WARNING: 	 transformer_layers: 12
+2023-10-16 12:13:34,295:WARNING: 		 linear_patch: 2d
+2023-10-16 12:13:34,295:WARNING: 	 cut_top_layer: 0
+2023-10-16 12:13:52,480:INFO: ***** Running test *****
+2023-10-16 12:13:52,481:INFO:   Num examples = 67770
+2023-10-16 12:13:52,481:INFO:   Batch size = 16
+2023-10-16 12:13:52,481:INFO:   Num steps = 4236
+2023-10-16 12:13:52,481:INFO: ***** Running val *****
+2023-10-16 12:13:52,481:INFO:   Num examples = 67770
+2023-10-16 12:13:53,358:INFO: ***** Running training *****
+2023-10-16 12:13:53,358:INFO:   Num examples = 149075
+2023-10-16 12:13:53,359:INFO:   Batch size = 4
+2023-10-16 12:13:53,359:INFO:   Num steps = 186340
+2023-10-16 12:15:25,314:INFO: Epoch: 1/5, Step: 50/37268, Lr: 0.000000000-0.000000268, CeLoss: 8.688060, Time/step: 1.839071
+2023-10-16 12:16:46,740:INFO: Epoch: 1/5, Step: 100/37268, Lr: 0.000000001-0.000000537, CeLoss: 9.100254, Time/step: 1.628518
