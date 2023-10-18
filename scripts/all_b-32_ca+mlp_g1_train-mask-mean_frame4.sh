@@ -177,7 +177,7 @@ main.py \
 --video_path ${DATA_PATH}/MSRVTT_Videos \
 --datatype msrvtt \
 --max_words 32 \
---max_frames 12 \
+--max_frames 4 \
 --video_framerate 1 \
 --output_dir outputs/msrvtt_ViT-B-32 \
 --embd_mode wti \
@@ -212,7 +212,7 @@ main.py \
 --video_path ${DATA_PATH}/MSRVTT_Videos \
 --datatype msrvtt \
 --max_words 32 \
---max_frames 12 \
+--max_frames 4 \
 --video_framerate 1 \
 --init_model outputs/msrvtt_ViT-B-32/best.bin \
 --output_dir outputs/msrvtt_ViT-B-32 \
@@ -247,7 +247,7 @@ main.py \
 # --video_path ${DATA_PATH}/videos \
 # --datatype didemo \
 # --max_words 32 \
-# --max_frames 12 \
+# --max_frames 8 \
 # --video_framerate 1 \
 # --init_model outputs/msrvtt_ViT-B-32/best.bin \
 # --output_dir outputs/msrvttTOdidemo_ViT-B-32 \
@@ -359,5 +359,3 @@ main.py \
 # --training_mask 1 \
 # --interaction_mask 0.8 \
 # --mask_mode mean
-
-hdfs dfs -put -f outputs hdfs://haruna/home/byte_arnold_lq_mlnlc/user/chengxuxin/lhx/VL/SaLIP_model

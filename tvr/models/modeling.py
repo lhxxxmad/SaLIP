@@ -667,7 +667,7 @@ class SLIP(nn.Module):
                 retrieve_logits1 = (t2v_logits1 + v2t_logits1) / 2.0
                 retrieve_logits2 = (t2v_logits2 + v2t_logits2) / 2.0
                 
-                rate = 0.0
+                rate = 0.6
                 retrieve_logits = retrieve_logits0 * rate+ retrieve_logits1 * (1-rate)
                 # retrieve_token_logits = torch.einsum('ad,bd->ab', [txt_token, vid_token])
 
