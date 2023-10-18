@@ -462,24 +462,127 @@ class SLIP(nn.Module):
         video_mask = video_mask.squeeze()
         text_mask = text_mask.squeeze()
         # crossmodal_cyc_loss, inmodal_cyc_loss, inmodal_contras_loss = 0., 0., 0.
-        text_weight, video_weight = None, None
         cls, video_feat = cls.contiguous(), video_feat.contiguous()
 
-        # if video_attention_mask is not None:
-        #     video_attention_mask = video_attention_mask.contiguous()
-        #     if self.training:
-        #         video_attention_mask = allgather(video_attention_mask, self.config)
-        #     video_feat = video_feat * (video_attention_mask.unsqueeze(-1) + 1e-10)
-            # video_feat = video_feat / video_attention_mask.sum(dim=-1, keepdim=True)
-        if self.embd_mode == 'slip':
+        video_mask = video_mask.squeeze()
+        text_mask = text_mask.squeeze()
+        props = None
+        retrieve_logits2 = None
+        ############################
+        # SA
+        # cross-attn
+        # ################################################################
+        B_t, N_t, D = text_feat.shape
+        B_v, N_v, D = video_feat.shape
+        if B_t > B_v:
+            pad_feat = torch.zeros(1, N_v, D).to(video_feat.device)
+            pad_feat = pad_feat.repeat(B_t-B_v, 1, 1)
+            video_feat = torch.cat([video_feat, pad_feat], dim=0)
+        if B_t < B_v:
+            pad_feat = torch.zeros(1, N_t, D).to(text_feat.device)
+            pad_feat = pad_feat.repeat(B_v-B_t, 1, 1)
+            text_feat = torch.cat([text_feat, pad_feat], dim=0)
+        try:
+            if self.sal_pred == 'ca+mlp':
+                cross_text_feat = self.attn(text_feat.permute(1,0,2), video_feat.permute(1,0,2), video_feat.permute(1,0,2))[0].permute(1,0,2)
+                cross_video_feat = self.attn(video_feat.permute(1,0,2), text_feat.permute(1,0,2), text_feat.permute(1,0,2))[0].permute(1,0,2)
+            elif self.sal_pred == 'trans':
+                cross_text_feat = self.saliency_text_trans(video_feat.permute(1,0,2), text_feat.permute(1,0,2)).permute(1,0,2)
+                # cross_text_feat = self.rec_text_trans1(text_feat, None, video_feat, None, decoding=1)[1]
+                cross_video_feat = self.saliency_video_trans(text_feat.permute(1,0,2), video_feat.permute(1,0,2)).permute(1,0,2)
+                # cross_video_feat = self.rec_video_trans1(video_feat, None, text_feat, None,  decoding=1)[1]
+            elif self.sal_pred == 'mlp':
+                cross_text_feat = text_feat
+                cross_video_feat = video_feat
+            elif self.sal_pred == 'sa+mlp':
+                cross_text_feat = self.attn(text_feat.permute(1,0,2), text_feat.permute(1,0,2), text_feat.permute(1,0,2))[0].permute(1,0,2)
+                cross_video_feat = self.attn(video_feat.permute(1,0,2), video_feat.permute(1,0,2), video_feat.permute(1,0,2))[0].permute(1,0,2)
+        except:
+            pdb.set_trace()
+        if B_t < B_v:
+            text_feat = text_feat[: B_t, ::]
+            cross_text_feat = cross_text_feat[: B_t, ::]
+        if B_t > B_v:
+            video_feat = video_feat[: B_v, ::]
+            cross_video_feat = cross_video_feat[: B_v, ::]
+
+        # saliency token
+        if gauss:
+            # text_weight = self.text_weight_fc(cross_text_feat).squeeze(2)  # B_t x N_t x D -> B_t x N_t
+            # text_weight =  self.text_saliency_fc(cross_text_feat[:,-1])
+            # video_weight =  self.video_saliency_fc(cross_video_feat[:,-1])
+            props = torch.sigmoid(self.moment_fc(cross_video_feat[:,-1])).view(-1, 2)
+            cross_video_feat = cross_video_feat[:, : -1]
+            cross_text_feat = cross_text_feat[:, : -1]
+
+            text_weight = self.text_weight_fc(cross_text_feat).squeeze(2)  # B_t x N_t x D -> B_t x N_t
+            video_weight = self.video_weight_fc(cross_video_feat).squeeze(2) # B_v x N_v x D -> B_v x N_v
+            # pdb.set_trace()
+            txt_token = text_feat[:,-1]
+            vid_token = video_feat[:,-1]
+            
+            text_feat = text_feat[:, : -1]
+            video_feat = video_feat[:, : -1]
+            text_mask = text_mask[:, : -1]
+            video_mask = video_mask[:, : -1]
+
+        else:
+            # MLP
+            # text_weight = self.text_weight_fc(text_feat).squeeze(2)  # B_t x N_t x D -> B_t x N_t
+            # Cross-Attn
+            text_weight = self.text_weight_fc(cross_text_feat).squeeze(2)  # B_t x N_t x D -> B_t x N_t
+
+            # MLP
+            # video_weight = self.video_weight_fc(video_feat).squeeze(2) # B_v x N_v x D -> B_v x N_v
+            # Cross-Attn
+            video_weight = self.video_weight_fc(cross_video_feat).squeeze(2) # B_v x N_v x D -> B_v x N_v
+
+        text_weight.masked_fill_(torch.tensor((1 - text_mask), dtype=torch.bool), float("-inf"))
+        text_weight = torch.softmax(text_weight, dim=-1)  # B_t x N_t
+        # text_weight = torch.sigmoid(text_weight)  # B_t x N_t            
+
+        video_weight = video_weight.masked_fill(torch.tensor((1 - video_mask), dtype=torch.bool), float("-inf"))
+        video_weight = torch.softmax(video_weight, dim=-1)  # B_v x N_v
+
+        # 保留mask_rate的token
+        if self.training_mask:
+            # print("training mask")
+            # pdb.set_trace()
+            # _, t_mask = self._mask_feat(text_feat, text_mask.sum(1), text_weight, mask_rate=self.config.text_mask_rate, mode=self.config.mask_mode, mask_idx='0')
+            # text_mask = text_mask * t_mask.squeeze(-1)
+            _, v_mask1 = self._mask_feat(video_feat, video_mask.sum(1), video_weight, mask_rate=self.config.interaction_mask, mode=self.config.mask_mode, mask_idx='0')
+            v_mask2 = 1 - v_mask1
+            video_mask1 = video_mask * v_mask1.squeeze(-1)
+            video_mask2 = video_mask * v_mask2.squeeze(-1)
+            # text_weight.masked_fill_(torch.tensor((1 - text_mask), dtype=torch.bool), float("-inf"))
+            # text_weight = torch.softmax(text_weight, dim=-1)  # B_t x N_t
+            # # text_weight = torch.sigmoid(text_weight)  # B_t x N_t            
+
+            # video_weight.masked_fill_(torch.tensor((1 - video_mask), dtype=torch.bool), float("-inf"))
+            # video_weight = torch.softmax(video_weight, dim=-1)  # B_v x N_v
+            # # video_weight = torch.sigmoid(video_weight)  # B_v x N_v
+        else:
+            video_mask1 = video_mask
+            video_mask2 = video_mask
+
+        # text_weight.masked_fill_(torch.tensor((1 - text_mask), dtype=torch.bool), float("-inf"))
+        # text_weight = torch.softmax(text_weight, dim=-1)  # B_t x N_t
+        # text_weight = torch.sigmoid(text_weight)  # B_t x N_t            
+
+        video_weight1 = video_weight.masked_fill(torch.tensor((1 - video_mask1), dtype=torch.bool), float("-inf"))
+        video_weight1 = torch.softmax(video_weight, dim=-1)  # B_v x N_v
+        video_weight2 = video_weight.masked_fill(torch.tensor((1 - video_mask2), dtype=torch.bool), float("-inf"))
+        video_weight2 = torch.softmax(video_weight, dim=-1)  # B_v x N_v
+
+        if self.embd_mode == 'emcl':
+            text_feat = text_feat * text_weight.unsqueeze(-1)
+            cls = self._mean_pooling_for_similarity_sequence(text_feat, text_mask)
+            video_feat = video_feat * video_weight.unsqueeze(-1)
             v_weight = torch.einsum('ad,bvd->abv', [cls, video_feat])
             v_weight = torch.softmax(v_weight / self.config.temp, dim=-1)
-            if video_attention_mask is None:
-                v_weight = torch.einsum('abv,bv->abv', [v_weight, video_mask])
-            else:
-                # v_weight = torch.einsum('abv,bv->abv', [v_weight, video_mask * video_attention_mask / video_attention_mask.sum(dim=-1, keepdim=True) ])
-                v_weight = torch.einsum('abv,bv->abv', [v_weight, video_attention_mask])
-                # v_weight = torch.einsum('abv,bv->abv', [v_weight, video_mask])
+            
+            v_weight = torch.einsum('abv,bv->abv', [v_weight, video_mask])
+
             video_feat = torch.einsum('abv,bvd->abd', [v_weight, video_feat])
             a, d = cls.size()
             video_feat = video_feat.contiguous().view(-1, d)
@@ -500,134 +603,22 @@ class SLIP(nn.Module):
             text_feat = cls / cls.norm(dim=-1, keepdim=True)            
             retrieve_logits = torch.bmm(text_feat.unsqueeze(1), video_feat.permute(1,2,0)).squeeze(1)
 
-        elif self.embd_mode == 'cyc':
+        elif self.embd_mode == 'clip4clip':
             bs = video_feat.size()[0]
             video_feat = video_feat / video_feat.norm(dim=-1, keepdim=True)
-            video_feat = self.get_video_avg_feat(video_feat, video_mask)
+
+            video_feat = video_feat * video_weight.unsqueeze(-1)
+            video_feat = self._mean_pooling_for_similarity_visual(video_feat, video_mask)
             video_feat = video_feat / video_feat.norm(dim=-1, keepdim=True)
 
-            text_feat = self.get_text_sep_feat(text_feat, text_mask).squeeze(1)
+            text_feat = text_feat * text_weight.unsqueeze(-1)
+            text_feat = self._mean_pooling_for_similarity_sequence(text_feat, text_mask)
             text_feat = text_feat / text_feat.norm(dim=-1, keepdim=True)
 
             retrieve_logits = torch.matmul(text_feat, video_feat.t())
-            # if self.training:
-            #     text_logits = torch.matmul(text_feat, text_feat.t()) * self.clip.logit_scale.exp()
-            #     video_logits = torch.matmul(video_feat, video_feat.t()) * self.clip.logit_scale.exp()
-
-            #     crossmodal_cyc_loss = (retrieve_logits* self.clip.logit_scale.exp() - retrieve_logits.T* self.clip.logit_scale.exp()).square().mean() / (self.clip.logit_scale.exp() * self.clip.logit_scale.exp())
-            #     inmodal_cyc_loss = (video_logits - text_logits).square().mean() / (self.clip.logit_scale.exp() * self.clip.logit_scale.exp())
-
-            #     inmodal_contras_loss = (self.loss_fct(text_logits) + self.loss_fct(video_logits) ) / 2 
 
         elif self.embd_mode == 'wti':
-            video_mask = video_mask.squeeze()
-            text_mask = text_mask.squeeze()
-            props = None
-            ############################
-            # SA
-            # cross-attn
-            # ################################################################
-            B_t, N_t, D = text_feat.shape
-            B_v, N_v, D = video_feat.shape
-            if B_t > B_v:
-                pad_feat = torch.zeros(1, N_v, D).to(video_feat.device)
-                pad_feat = pad_feat.repeat(B_t-B_v, 1, 1)
-                video_feat = torch.cat([video_feat, pad_feat], dim=0)
-            if B_t < B_v:
-                pad_feat = torch.zeros(1, N_t, D).to(text_feat.device)
-                pad_feat = pad_feat.repeat(B_v-B_t, 1, 1)
-                text_feat = torch.cat([text_feat, pad_feat], dim=0)
-            try:
-                if self.sal_pred == 'ca+mlp':
-                    cross_text_feat = self.attn(text_feat.permute(1,0,2), video_feat.permute(1,0,2), video_feat.permute(1,0,2))[0].permute(1,0,2)
-                    cross_video_feat = self.attn(video_feat.permute(1,0,2), text_feat.permute(1,0,2), text_feat.permute(1,0,2))[0].permute(1,0,2)
-                elif self.sal_pred == 'trans':
-                    cross_text_feat = self.saliency_text_trans(video_feat.permute(1,0,2), text_feat.permute(1,0,2)).permute(1,0,2)
-                    # cross_text_feat = self.rec_text_trans1(text_feat, None, video_feat, None, decoding=1)[1]
-                    cross_video_feat = self.saliency_video_trans(text_feat.permute(1,0,2), video_feat.permute(1,0,2)).permute(1,0,2)
-                    # cross_video_feat = self.rec_video_trans1(video_feat, None, text_feat, None,  decoding=1)[1]
-                elif self.sal_pred == 'mlp':
-                    cross_text_feat = text_feat
-                    cross_video_feat = video_feat
-                elif self.sal_pred == 'sa+mlp':
-                    cross_text_feat = self.attn(text_feat.permute(1,0,2), text_feat.permute(1,0,2), text_feat.permute(1,0,2))[0].permute(1,0,2)
-                    cross_video_feat = self.attn(video_feat.permute(1,0,2), video_feat.permute(1,0,2), video_feat.permute(1,0,2))[0].permute(1,0,2)
-            except:
-                pdb.set_trace()
-            if B_t < B_v:
-                text_feat = text_feat[: B_t, ::]
-                cross_text_feat = cross_text_feat[: B_t, ::]
-            if B_t > B_v:
-                video_feat = video_feat[: B_v, ::]
-                cross_video_feat = cross_video_feat[: B_v, ::]
 
-            # saliency token
-            if gauss:
-                # text_weight = self.text_weight_fc(cross_text_feat).squeeze(2)  # B_t x N_t x D -> B_t x N_t
-                # text_weight =  self.text_saliency_fc(cross_text_feat[:,-1])
-                # video_weight =  self.video_saliency_fc(cross_video_feat[:,-1])
-                props = torch.sigmoid(self.moment_fc(cross_video_feat[:,-1])).view(-1, 2)
-                cross_video_feat = cross_video_feat[:, : -1]
-                cross_text_feat = cross_text_feat[:, : -1]
-
-                text_weight = self.text_weight_fc(cross_text_feat).squeeze(2)  # B_t x N_t x D -> B_t x N_t
-                video_weight = self.video_weight_fc(cross_video_feat).squeeze(2) # B_v x N_v x D -> B_v x N_v
-                # pdb.set_trace()
-                txt_token = text_feat[:,-1]
-                vid_token = video_feat[:,-1]
-                
-                text_feat = text_feat[:, : -1]
-                video_feat = video_feat[:, : -1]
-                text_mask = text_mask[:, : -1]
-                video_mask = video_mask[:, : -1]
-
-            else:
-                # MLP
-                # text_weight = self.text_weight_fc(text_feat).squeeze(2)  # B_t x N_t x D -> B_t x N_t
-                # Cross-Attn
-                text_weight = self.text_weight_fc(cross_text_feat).squeeze(2)  # B_t x N_t x D -> B_t x N_t
-
-                # MLP
-                # video_weight = self.video_weight_fc(video_feat).squeeze(2) # B_v x N_v x D -> B_v x N_v
-                # Cross-Attn
-                video_weight = self.video_weight_fc(cross_video_feat).squeeze(2) # B_v x N_v x D -> B_v x N_v
-
-            text_weight.masked_fill_(torch.tensor((1 - text_mask), dtype=torch.bool), float("-inf"))
-            text_weight = torch.softmax(text_weight, dim=-1)  # B_t x N_t
-            # text_weight = torch.sigmoid(text_weight)  # B_t x N_t            
-
-            video_weight = video_weight.masked_fill(torch.tensor((1 - video_mask), dtype=torch.bool), float("-inf"))
-            video_weight = torch.softmax(video_weight, dim=-1)  # B_v x N_v
-
-            # 保留mask_rate的token
-            if self.training_mask:
-                # print("training mask")
-                # pdb.set_trace()
-                # _, t_mask = self._mask_feat(text_feat, text_mask.sum(1), text_weight, mask_rate=self.config.text_mask_rate, mode=self.config.mask_mode, mask_idx='0')
-                # text_mask = text_mask * t_mask.squeeze(-1)
-                _, v_mask1 = self._mask_feat(video_feat, video_mask.sum(1), video_weight, mask_rate=self.config.interaction_mask, mode=self.config.mask_mode, mask_idx='0')
-                v_mask2 = 1 - v_mask1
-                video_mask1 = video_mask * v_mask1.squeeze(-1)
-                video_mask2 = video_mask * v_mask2.squeeze(-1)
-                # text_weight.masked_fill_(torch.tensor((1 - text_mask), dtype=torch.bool), float("-inf"))
-                # text_weight = torch.softmax(text_weight, dim=-1)  # B_t x N_t
-                # # text_weight = torch.sigmoid(text_weight)  # B_t x N_t            
-
-                # video_weight.masked_fill_(torch.tensor((1 - video_mask), dtype=torch.bool), float("-inf"))
-                # video_weight = torch.softmax(video_weight, dim=-1)  # B_v x N_v
-                # # video_weight = torch.sigmoid(video_weight)  # B_v x N_v
-            else:
-                video_mask1 = video_mask
-                video_mask2 = video_mask
-
-            # text_weight.masked_fill_(torch.tensor((1 - text_mask), dtype=torch.bool), float("-inf"))
-            # text_weight = torch.softmax(text_weight, dim=-1)  # B_t x N_t
-            # text_weight = torch.sigmoid(text_weight)  # B_t x N_t            
-
-            video_weight1 = video_weight.masked_fill(torch.tensor((1 - video_mask1), dtype=torch.bool), float("-inf"))
-            video_weight1 = torch.softmax(video_weight, dim=-1)  # B_v x N_v
-            video_weight2 = video_weight.masked_fill(torch.tensor((1 - video_mask2), dtype=torch.bool), float("-inf"))
-            video_weight2 = torch.softmax(video_weight, dim=-1)  # B_v x N_v
 
             # ################################################################
                 
@@ -713,7 +704,9 @@ class SLIP(nn.Module):
                 text_feat = torch.sum(text_feat, dim=1) / (text_sum.unsqueeze(1))
                 video_feat = torch.sum(video_feat, dim=1) / (video_sum.unsqueeze(1))
                 retrieve_logits = torch.einsum('ad,bd->ab', [text_feat, video_feat])
-                
+
+        if retrieve_logits2 is None:
+            retrieve_logits2 = retrieve_logits
         return retrieve_logits, retrieve_logits.T, retrieve_logits2, retrieve_logits2.T, text_weight, video_weight, props
         # return retrieve_logits, retrieve_logits.T, props
 
