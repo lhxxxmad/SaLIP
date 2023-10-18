@@ -82,7 +82,7 @@ def get_args(description='Disentangled Representation Learning for Text-Video Re
 
 
     ## for embedding mode
-    parser.add_argument('--embd_mode', type=str, choices=['slip', 'xpool', 'cyc', 'wti'])
+    parser.add_argument('--embd_mode', type=str)
     parser.add_argument('--temp_loss_weight', type=float, default=1.0)
     parser.add_argument('--rec_loss_weight', type=float, default=1.0)
     parser.add_argument('--ret_loss_weight', type=float, default=1.0)
