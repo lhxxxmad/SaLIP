@@ -256,10 +256,11 @@ class SLIP(nn.Module):
             # tmp_0 = torch.zeros_like(retrieval_loss).cuda()
             # tmp_0.requires_grad = False        
             # div_loss = torch.max(retrieval_loss - retrieval_loss2 + self.margin2, tmp_0)
-            final_loss = retrieval_loss  #+ div_loss # + (rec_video_loss + rec_text_loss)/2.0
+            final_loss = retrieval_loss  + retrieval_loss2 *0.1 # + (rec_video_loss + rec_text_loss)/2.0
 
             final_loss_dict = {'final_loss': final_loss.item(), 
                                 'retrieval_loss': retrieval_loss.item(), 
+                                'retrieval_loss2': retrieval_loss2.item(),
                                 # 'rec_video_loss': self.rec_loss_weight * rec_video_loss.item(), 
                                 # 'rec_text_loss': self.rec_loss_weight * rec_text_loss.item(),
                                 # 'rec_tm_loss': (self.lambda1 * rec_tm).item(),
@@ -548,12 +549,12 @@ class SLIP(nn.Module):
         if self.training_mask:
             # print("training mask")
             # pdb.set_trace()
-            # _, t_mask = self._mask_feat(text_feat, text_mask.sum(1), text_weight, mask_rate=self.config.text_mask_rate, mode=self.config.mask_mode, mask_idx='0')
-            # text_mask = text_mask * t_mask.squeeze(-1)
+            _, t_mask = self._mask_feat(text_feat, text_mask.sum(1), text_weight, mask_rate=self.config.text_mask_rate, mode=self.config.mask_mode, mask_idx='0')
+            text_mask1 = text_mask * t_mask.squeeze(-1)
             _, v_mask1 = self._mask_feat(video_feat, video_mask.sum(1), video_weight, mask_rate=self.config.interaction_mask, mode=self.config.mask_mode, mask_idx='0')
-            v_mask2 = 1 - v_mask1
+            # v_mask2 = 1 - v_mask1
             video_mask1 = video_mask * v_mask1.squeeze(-1)
-            video_mask2 = video_mask * v_mask2.squeeze(-1)
+            # video_mask2 = video_mask * v_mask2.squeeze(-1)
             # text_weight.masked_fill_(torch.tensor((1 - text_mask), dtype=torch.bool), float("-inf"))
             # text_weight = torch.softmax(text_weight, dim=-1)  # B_t x N_t
             # # text_weight = torch.sigmoid(text_weight)  # B_t x N_t            
@@ -562,17 +563,18 @@ class SLIP(nn.Module):
             # video_weight = torch.softmax(video_weight, dim=-1)  # B_v x N_v
             # # video_weight = torch.sigmoid(video_weight)  # B_v x N_v
         else:
+            text_mask1 =text_mask
             video_mask1 = video_mask
-            video_mask2 = video_mask
+            # video_mask2 = video_mask
 
-        # text_weight.masked_fill_(torch.tensor((1 - text_mask), dtype=torch.bool), float("-inf"))
-        # text_weight = torch.softmax(text_weight, dim=-1)  # B_t x N_t
+        text_weight1 = text_weight.masked_fill(torch.tensor((1 - text_mask1), dtype=torch.bool), float("-inf"))
+        text_weight1 = torch.softmax(text_weight1, dim=-1)  # B_t x N_t
         # text_weight = torch.sigmoid(text_weight)  # B_t x N_t            
 
         video_weight1 = video_weight.masked_fill(torch.tensor((1 - video_mask1), dtype=torch.bool), float("-inf"))
         video_weight1 = torch.softmax(video_weight, dim=-1)  # B_v x N_v
-        video_weight2 = video_weight.masked_fill(torch.tensor((1 - video_mask2), dtype=torch.bool), float("-inf"))
-        video_weight2 = torch.softmax(video_weight, dim=-1)  # B_v x N_v
+        # video_weight2 = video_weight.masked_fill(torch.tensor((1 - video_mask2), dtype=torch.bool), float("-inf"))
+        # video_weight2 = torch.softmax(video_weight, dim=-1)  # B_v x N_v
 
         if self.embd_mode == 'emcl':
             text_feat = text_feat * text_weight.unsqueeze(-1)
@@ -631,10 +633,12 @@ class SLIP(nn.Module):
             cls_feat = cls/cls.norm(dim=-1, keepdim=True)
             # 
             retrieve_logits = torch.einsum('atd,bvd->abtv', [text_feat, video_feat])
-            retrieve_logits = torch.einsum('abtv,at->abtv', [retrieve_logits, text_mask])
-            retrieve_logits0 = torch.einsum('abtv,bv->abtv', [retrieve_logits, video_mask.squeeze(-1)])
-            retrieve_logits1 = torch.einsum('abtv,bv->abtv', [retrieve_logits, video_mask1.squeeze(-1)])
-            retrieve_logits2 = torch.einsum('abtv,bv->abtv', [retrieve_logits, video_mask2.squeeze(-1)])
+            retrieve_logits0 = torch.einsum('abtv,at->abtv', [retrieve_logits, text_mask])
+            retrieve_logits1 = torch.einsum('abtv,at->abtv', [retrieve_logits, text_mask1])
+
+            retrieve_logits0 = torch.einsum('abtv,bv->abtv', [retrieve_logits0, video_mask.squeeze(-1)])
+            retrieve_logits1 = torch.einsum('abtv,bv->abtv', [retrieve_logits1, video_mask1.squeeze(-1)])
+            # retrieve_logits2 = torch.einsum('abtv,bv->abtv', [retrieve_logits, video_mask2.squeeze(-1)])
             text_sum = text_mask.sum(-1)
             video_sum = video_mask.sum(-1)
 
@@ -643,23 +647,23 @@ class SLIP(nn.Module):
                 t2v_logits0, max_idx1 = retrieve_logits0.max(dim=-1)  # abtv -> abt
                 t2v_logits0 = torch.einsum('abt,at->ab', [t2v_logits0, text_weight])
                 t2v_logits1, max_idx1 = retrieve_logits1.max(dim=-1)  # abtv -> abt
-                t2v_logits1 = torch.einsum('abt,at->ab', [t2v_logits1, text_weight])
-                t2v_logits2, max_idx1 = retrieve_logits2.max(dim=-1)  # abtv -> abt
-                t2v_logits2 = torch.einsum('abt,at->ab', [t2v_logits2, text_weight])
+                t2v_logits1 = torch.einsum('abt,at->ab', [t2v_logits1, text_weight1])
+                # t2v_logits2, max_idx1 = retrieve_logits2.max(dim=-1)  # abtv -> abt
+                # t2v_logits2 = torch.einsum('abt,at->ab', [t2v_logits2, text_weight])
 
                 v2t_logits0, max_idx2 = retrieve_logits0.max(dim=-2)  # abtv -> abv
                 v2t_logits0 = torch.einsum('abv,bv->ab', [v2t_logits0, video_weight])
                 v2t_logits1, max_idx2 = retrieve_logits1.max(dim=-2)  # abtv -> abv
                 v2t_logits1 = torch.einsum('abv,bv->ab', [v2t_logits1, video_weight1])
-                v2t_logits2, max_idx2 = retrieve_logits2.max(dim=-2)  # abtv -> abv
-                v2t_logits2 = torch.einsum('abv,bv->ab', [v2t_logits2, video_weight2])
+                # v2t_logits2, max_idx2 = retrieve_logits2.max(dim=-2)  # abtv -> abv
+                # v2t_logits2 = torch.einsum('abv,bv->ab', [v2t_logits2, video_weight2])
 
                 retrieve_logits0 = (t2v_logits0 + v2t_logits0) / 2.0
                 retrieve_logits1 = (t2v_logits1 + v2t_logits1) / 2.0
-                retrieve_logits2 = (t2v_logits2 + v2t_logits2) / 2.0
+                # retrieve_logits2 = (t2v_logits2 + v2t_logits2) / 2.0
                 
-                # rate = 0.6
-                retrieve_logits = retrieve_logits0 #* rate+ retrieve_logits1 * (1-rate)
+                rate = 0.6
+                retrieve_logits = retrieve_logits0 * rate+ retrieve_logits1 * (1-rate)
                 # retrieve_token_logits = torch.einsum('ad,bd->ab', [txt_token, vid_token])
 
                 # retrieve_logits1+= retrieve_token_logits*0.1
@@ -705,9 +709,9 @@ class SLIP(nn.Module):
                 video_feat = torch.sum(video_feat, dim=1) / (video_sum.unsqueeze(1))
                 retrieve_logits = torch.einsum('ad,bd->ab', [text_feat, video_feat])
 
-        if retrieve_logits2 is None:
-            retrieve_logits2 = retrieve_logits
-        return retrieve_logits, retrieve_logits.T, retrieve_logits2, retrieve_logits2.T, text_weight, video_weight, props
+        if retrieve_logits1 is None:
+            retrieve_logits1 = retrieve_logits
+        return retrieve_logits, retrieve_logits.T, retrieve_logits1, retrieve_logits1.T, text_weight, video_weight, props
         # return retrieve_logits, retrieve_logits.T, props
 
     def RelaxedWordMoverSimilarity(self, x1, mask1, x2, mask2):
@@ -865,7 +869,7 @@ class SLIP(nn.Module):
             elif mode=='topk':
                 choices = torch.topk(weights[i, :l], k=num_masked_vec)[1]
             elif mode=='mean':
-                choices = torch.where(weights[i, :l] >= weights[i, :l].mean())
+                choices = torch.where(weights[i, :l] >= weights[i, :l].mean()*0.8)
             masked_vec[-1][choices] = 1
 
         masked_vec = torch.stack(masked_vec, 0).unsqueeze(-1)
