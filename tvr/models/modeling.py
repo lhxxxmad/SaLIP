@@ -549,7 +549,7 @@ class SLIP(nn.Module):
         if self.training_mask:
             # print("training mask")
             # pdb.set_trace()
-            _, t_mask = self._mask_feat(text_feat, text_mask.sum(1), text_weight, mask_rate=self.config.interaction_mask, mode=self.config.mask_mode, mask_idx='0',thresholds=0.8)
+            _, t_mask = self._mask_feat(text_feat, text_mask.sum(1), text_weight, mask_rate=self.config.text_mask_rate, mode=self.config.mask_mode, mask_idx='0',thresholds=0.8)
             text_mask1 = text_mask * t_mask.squeeze(-1)
             _, v_mask1 = self._mask_feat(video_feat, video_mask.sum(1), video_weight, mask_rate=self.config.interaction_mask, mode=self.config.mask_mode, mask_idx='0',thresholds=1.0)
             # v_mask2 = 1 - v_mask1
@@ -662,7 +662,7 @@ class SLIP(nn.Module):
                 retrieve_logits1 = (t2v_logits1 + v2t_logits1) / 2.0
                 # retrieve_logits2 = (t2v_logits2 + v2t_logits2) / 2.0
                 
-                rate = 0.0
+                rate = 0.6
                 retrieve_logits = retrieve_logits0 * rate+ retrieve_logits1 * (1-rate)
                 # retrieve_token_logits = torch.einsum('ad,bd->ab', [txt_token, vid_token])
 
