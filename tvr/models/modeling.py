@@ -539,11 +539,11 @@ class SLIP(nn.Module):
             video_weight = self.video_weight_fc(cross_video_feat).squeeze(2) # B_v x N_v x D -> B_v x N_v
 
         text_weight.masked_fill_(torch.tensor((1 - text_mask), dtype=torch.bool), float("-inf"))
-        text_weight = torch.softmax(text_weight, dim=-1)  # B_t x N_t
+        text_weight = torch.sigmoid(text_weight, dim=-1)  # B_t x N_t
         # text_weight = torch.sigmoid(text_weight)  # B_t x N_t            
 
         video_weight = video_weight.masked_fill(torch.tensor((1 - video_mask), dtype=torch.bool), float("-inf"))
-        video_weight = torch.softmax(video_weight, dim=-1)  # B_v x N_v
+        video_weight = torch.sigmoid(video_weight, dim=-1)  # B_v x N_v
 
         # 保留mask_rate的token
         if self.training_mask and self.training:
