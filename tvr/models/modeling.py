@@ -485,8 +485,11 @@ class SLIP(nn.Module):
             text_feat = torch.cat([text_feat, pad_feat], dim=0)
         try:
             if self.sal_pred == 'ca+mlp':
-                cross_text_feat = self.attn(text_feat.permute(1,0,2), video_feat.permute(1,0,2), video_feat.permute(1,0,2))[0].permute(1,0,2)
-                cross_video_feat = self.attn(video_feat.permute(1,0,2), text_feat.permute(1,0,2), text_feat.permute(1,0,2))[0].permute(1,0,2)
+                # pdb.set_trace()
+                cross_text_feat = self.xpool(text_feat, video_feat)
+                cross_video_feat = self.xpool(video_feat, text_feat)
+                # cross_text_feat = self.attn(text_feat.permute(1,0,2), video_feat.permute(1,0,2), video_feat.permute(1,0,2))[0].permute(1,0,2)
+                # cross_video_feat = self.attn(video_feat.permute(1,0,2), text_feat.permute(1,0,2), text_feat.permute(1,0,2))[0].permute(1,0,2)
             elif self.sal_pred == 'trans':
                 cross_text_feat = self.saliency_text_trans(video_feat.permute(1,0,2), text_feat.permute(1,0,2)).permute(1,0,2)
                 # cross_text_feat = self.rec_text_trans1(text_feat, None, video_feat, None, decoding=1)[1]
@@ -538,12 +541,12 @@ class SLIP(nn.Module):
             # Cross-Attn
             video_weight = self.video_weight_fc(cross_video_feat).squeeze(2) # B_v x N_v x D -> B_v x N_v
 
-        text_weight.masked_fill_(torch.tensor((1 - text_mask), dtype=torch.bool), float("-inf"))
-        text_weight = torch.sigmoid(text_weight, dim=-1)  # B_t x N_t
+        # text_weight.masked_fill_(torch.tensor((1 - text_mask), dtype=torch.bool), float("-inf"))
+        # text_weight = torch.softmax(text_weight, dim=-1)  # B_t x N_t
         # text_weight = torch.sigmoid(text_weight)  # B_t x N_t            
 
-        video_weight = video_weight.masked_fill(torch.tensor((1 - video_mask), dtype=torch.bool), float("-inf"))
-        video_weight = torch.sigmoid(video_weight, dim=-1)  # B_v x N_v
+        # video_weight = video_weight.masked_fill(torch.tensor((1 - video_mask), dtype=torch.bool), float("-inf"))
+        # video_weight = torch.softmax(video_weight, dim=-1)  # B_v x N_v
 
         # 保留mask_rate的token
         if self.training_mask and self.training:
@@ -662,7 +665,7 @@ class SLIP(nn.Module):
                 retrieve_logits1 = (t2v_logits1 + v2t_logits1) / 2.0
                 # retrieve_logits2 = (t2v_logits2 + v2t_logits2) / 2.0
                 
-                rate = 0.6
+                rate = 0.9
                 retrieve_logits = retrieve_logits0 * rate+ retrieve_logits1 * (1-rate)
                 # retrieve_token_logits = torch.einsum('ad,bd->ab', [txt_token, vid_token])
 
