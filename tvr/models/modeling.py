@@ -102,6 +102,19 @@ class SLIP(nn.Module):
             nn.Linear(transformer_width, transformer_width), nn.ReLU(inplace=True),
             nn.Linear(transformer_width, self.num_props * 2))
 
+        self.video_mu_fc = nn.Sequential(
+            nn.Linear(transformer_width, transformer_width // 2), nn.ReLU(inplace=True),
+            nn.Linear(transformer_width// 2, transformer_width))
+        self.video_sigma_fc = nn.Sequential(
+            nn.Linear(transformer_width, transformer_width // 2), nn.ReLU(inplace=True),
+            nn.Linear(transformer_width// 2, transformer_width))
+        self.text_mu_fc = nn.Sequential(
+            nn.Linear(transformer_width, transformer_width // 2 ), nn.ReLU(inplace=True),
+            nn.Linear(transformer_width// 2, transformer_width))
+        self.text_sigma_fc = nn.Sequential(
+            nn.Linear(transformer_width, transformer_width // 2), nn.ReLU(inplace=True),
+            nn.Linear(transformer_width// 2, transformer_width))
+
         ## ===> generate Gaussian masks
         self.mse_loss = nn.MSELoss(reduction='none')
         self.rec_loss = True
@@ -137,6 +150,8 @@ class SLIP(nn.Module):
         self.lambda1 = 0.1
         self.alpha = 0.0
         self.trans = DualTransformer()
+        self.eps = 0.1
+        self.max_iter = 100
         ## ===> end of generate Gaussian masks
 
 
@@ -521,6 +536,7 @@ class SLIP(nn.Module):
 
             text_weight = self.text_weight_fc(cross_text_feat).squeeze(2)  # B_t x N_t x D -> B_t x N_t
             video_weight = self.video_weight_fc(cross_video_feat).squeeze(2) # B_v x N_v x D -> B_v x N_v
+            
             # pdb.set_trace()
             txt_token = text_feat[:,-1]
             vid_token = video_feat[:,-1]
@@ -529,6 +545,16 @@ class SLIP(nn.Module):
             video_feat = video_feat[:, : -1]
             text_mask = text_mask[:, : -1]
             video_mask = video_mask[:, : -1]
+
+            vid_mu, vid_sigma = self.video_mu_fc(video_feat), self.video_sigma_fc(video_feat)
+            txt_mu, txt_sigma = self.text_mu_fc(text_feat), self.text_sigma_fc(text_feat)
+
+            B, N, C = video_feat.shape
+            vid_tmp = vid_mu + torch.exp(vid_sigma) * torch.randn(B, N, C, device=vid_mu.device)
+            video_feat = video_feat + F.dropout(vid_tmp, p=0.1)
+            B, N, C = text_feat.shape
+            txt_tmp = txt_mu + torch.exp(txt_sigma) * torch.randn(B, N, C, device=txt_mu.device)
+            text_feat = text_feat + F.dropout(txt_tmp, p=0.1)
 
         else:
             # MLP
@@ -540,6 +566,7 @@ class SLIP(nn.Module):
             # video_weight = self.video_weight_fc(video_feat).squeeze(2) # B_v x N_v x D -> B_v x N_v
             # Cross-Attn
             video_weight = self.video_weight_fc(cross_video_feat).squeeze(2) # B_v x N_v x D -> B_v x N_v
+
 
         # text_weight.masked_fill_(torch.tensor((1 - text_mask), dtype=torch.bool), float("-inf"))
         # text_weight = torch.softmax(text_weight, dim=-1)  # B_t x N_t
@@ -578,6 +605,7 @@ class SLIP(nn.Module):
         video_weight1 = torch.softmax(video_weight, dim=-1)  # B_v x N_v
         # video_weight2 = video_weight.masked_fill(torch.tensor((1 - video_mask2), dtype=torch.bool), float("-inf"))
         # video_weight2 = torch.softmax(video_weight, dim=-1)  # B_v x N_v
+
 
         if self.embd_mode == 'emcl':
             text_feat = text_feat * text_weight.unsqueeze(-1)
@@ -641,6 +669,9 @@ class SLIP(nn.Module):
 
             retrieve_logits0 = torch.einsum('abtv,bv->abtv', [retrieve_logits0, video_mask.squeeze(-1)])
             retrieve_logits1 = torch.einsum('abtv,bv->abtv', [retrieve_logits1, video_mask1.squeeze(-1)])
+            # pdb.set_trace()
+            sim_ot = self.get_ot_sim(retrieve_logits0)
+            retrieve_logits0 = retrieve_logits0 + sim_ot
             # retrieve_logits2 = torch.einsum('abtv,bv->abtv', [retrieve_logits, video_mask2.squeeze(-1)])
             text_sum = text_mask.sum(-1)
             video_sum = video_mask.sum(-1)
@@ -716,6 +747,37 @@ class SLIP(nn.Module):
             retrieve_logits1 = retrieve_logits
         return retrieve_logits, retrieve_logits.T, retrieve_logits1, retrieve_logits1.T, text_weight, video_weight, props
         # return retrieve_logits, retrieve_logits.T, props
+
+    def get_ot_sim(self, sim):
+        a,b,t,v = sim.shape
+        sim = sim.contiguous().view(t,v,a*b)
+        sim = sim.permute(2,0,1)
+        wdist = 1.0 - sim
+        xx=torch.zeros(a*b, t, dtype=sim.dtype, device=sim.device).fill_(1. / t)
+        yy=torch.zeros(a*b, v, dtype=sim.dtype, device=sim.device).fill_(1. / v)
+
+        with torch.no_grad():
+            KK = torch.exp(-wdist / self.eps)
+            T = self.Sinkhorn(KK,xx,yy)
+        out = T * sim
+        out = out.permute(1,2,0).contiguous()
+        return out.view(a,b,t,v)
+        
+    def Sinkhorn(self, K, u, v):
+        r = torch.ones_like(u)
+        c = torch.ones_like(v)
+        thresh = 1e-2
+        for i in range(self.max_iter):
+            r0 = r
+            r = u / torch.matmul(K, c.unsqueeze(-1)).squeeze(-1)
+            c = v / torch.matmul(K.permute(0, 2, 1).contiguous(), r.unsqueeze(-1)).squeeze(-1)
+            err = (r - r0).abs().mean()
+            if err.item() < thresh:
+                break
+
+        T = torch.matmul(r.unsqueeze(-1), c.unsqueeze(-2)) * K
+
+        return T
 
     def RelaxedWordMoverSimilarity(self, x1, mask1, x2, mask2):
         """Compute relaxed word mover similarity
