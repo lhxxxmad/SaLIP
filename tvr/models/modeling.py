@@ -547,26 +547,26 @@ class SLIP(nn.Module):
             text_mask = text_mask[:, : -1]
             video_mask = video_mask[:, : -1]
 
-            vid_mu, vid_sigma = self.video_mu_fc(video_feat), self.video_sigma_fc(video_feat)
-            txt_mu, txt_sigma = self.text_mu_fc(text_feat), self.text_sigma_fc(text_feat)
+            # vid_mu, vid_sigma = self.video_mu_fc(video_feat), self.video_sigma_fc(video_feat)
+            # txt_mu, txt_sigma = self.text_mu_fc(text_feat), self.text_sigma_fc(text_feat)
 
-            B, N, C = video_feat.shape
-            samples = [vid_mu]
-            for _ in range(self.sample_num-1):
-                eps = torch.randn(B, N, C, device=vid_mu.device)
-                sample = vid_mu + torch.exp(vid_sigma) * eps
-                samples.append(sample)
-            vid_tmp = torch.cat(samples).view(B, self.sample_num, N, C).mean(dim=1)
-            video_feat = video_feat + F.dropout(vid_tmp, p=0.1)
+            # B, N, C = video_feat.shape
+            # samples = [vid_mu]
+            # for _ in range(self.sample_num-1):
+            #     eps = torch.randn(B, N, C, device=vid_mu.device)
+            #     sample = vid_mu + torch.exp(vid_sigma) * eps
+            #     samples.append(sample)
+            # vid_tmp = torch.cat(samples).view(B, self.sample_num, N, C).mean(dim=1)
+            # video_feat = video_feat + F.dropout(vid_tmp, p=0.1)
 
-            B, N, C = text_feat.shape
-            samples = [txt_mu]
-            for _ in range(self.sample_num-1):
-                eps = torch.randn(B, N, C, device=txt_mu.device)
-                sample = txt_mu + torch.exp(txt_sigma) * eps
-                samples.append(sample)
-            txt_tmp = torch.cat(samples).view(B, self.sample_num, N, C).mean(dim=1)
-            text_feat = text_feat + F.dropout(txt_tmp, p=0.1)
+            # B, N, C = text_feat.shape
+            # samples = [txt_mu]
+            # for _ in range(self.sample_num-1):
+            #     eps = torch.randn(B, N, C, device=txt_mu.device)
+            #     sample = txt_mu + torch.exp(txt_sigma) * eps
+            #     samples.append(sample)
+            # txt_tmp = torch.cat(samples).view(B, self.sample_num, N, C).mean(dim=1)
+            # text_feat = text_feat + F.dropout(txt_tmp, p=0.1)
 
         else:
             # MLP
@@ -682,8 +682,8 @@ class SLIP(nn.Module):
             retrieve_logits0 = torch.einsum('abtv,bv->abtv', [retrieve_logits0, video_mask.squeeze(-1)])
             retrieve_logits1 = torch.einsum('abtv,bv->abtv', [retrieve_logits1, video_mask1.squeeze(-1)])
             # pdb.set_trace()
-            sim_ot = self.get_ot_sim(retrieve_logits0)
-            retrieve_logits0 = retrieve_logits0 + sim_ot * 0.5
+            # sim_ot = self.get_ot_sim(retrieve_logits0)
+            # retrieve_logits0 = retrieve_logits0 + sim_ot * 0.5
             # retrieve_logits2 = torch.einsum('abtv,bv->abtv', [retrieve_logits, video_mask2.squeeze(-1)])
             text_sum = text_mask.sum(-1)
             video_sum = video_mask.sum(-1)
