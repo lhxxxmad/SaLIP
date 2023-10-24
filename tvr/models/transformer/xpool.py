@@ -52,7 +52,7 @@ class MultiHeadedAttention(nn.Module):
         attention_logits = torch.einsum('avhd,bthd->abhvt',[k, q])
         # attention_logits = k @ q
         attention_logits = attention_logits / math.sqrt(self.head_dim)
-        attention_weights = F.softmax(attention_logits, dim=-1)
+        attention_weights = F.softmax(attention_logits, dim=3)
 
         # num_vids x num_heads x head_dim x num_texts
         attention = torch.einsum('avhd, abhvt->abhtd',[v, attention_weights])
