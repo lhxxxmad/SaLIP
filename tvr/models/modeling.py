@@ -491,14 +491,37 @@ class SLIP(nn.Module):
         # ################################################################
         B_t, N_t, D = text_feat.shape
         B_v, N_v, D = video_feat.shape
-        if B_t > B_v:
-            pad_feat = torch.zeros(1, N_v, D).to(video_feat.device)
-            pad_feat = pad_feat.repeat(B_t-B_v, 1, 1)
-            video_feat = torch.cat([video_feat, pad_feat], dim=0)
-        if B_t < B_v:
-            pad_feat = torch.zeros(1, N_t, D).to(text_feat.device)
-            pad_feat = pad_feat.repeat(B_v-B_t, 1, 1)
-            text_feat = torch.cat([text_feat, pad_feat], dim=0)
+        # if B_t > B_v:
+        #     pad_feat = torch.zeros(1, N_v, D).to(video_feat.device)
+        #     pad_feat = pad_feat.repeat(B_t-B_v, 1, 1)
+        #     video_feat = torch.cat([video_feat, pad_feat], dim=0)
+        # if B_t < B_v:
+        #     pad_feat = torch.zeros(1, N_t, D).to(text_feat.device)
+        #     pad_feat = pad_feat.repeat(B_v-B_t, 1, 1)
+        #     text_feat = torch.cat([text_feat, pad_feat], dim=0)
+
+        # reparameter
+        vid_mu, vid_sigma = self.video_mu_fc(video_feat), self.video_sigma_fc(video_feat)
+        txt_mu, txt_sigma = self.text_mu_fc(text_feat), self.text_sigma_fc(text_feat)
+
+        B, N, C = video_feat.shape
+        samples = [vid_mu]
+        for _ in range(self.sample_num-1):
+            eps = torch.randn(B, N, C, device=vid_mu.device)
+            sample = vid_mu + torch.exp(vid_sigma) * eps
+            samples.append(sample)
+        text_feat = torch.cat(samples).view(B, self.sample_num, N, C).mean(dim=1)
+        # video_feat = video_feat + F.dropout(vid_tmp, p=0.1)
+
+        B, N, C = text_feat.shape
+        samples = [txt_mu]
+        for _ in range(self.sample_num-1):
+            eps = torch.randn(B, N, C, device=txt_mu.device)
+            sample = txt_mu + torch.exp(txt_sigma) * eps
+            samples.append(sample)
+        text_feat = torch.cat(samples).view(B, self.sample_num, N, C).mean(dim=1)
+        
+        # text_feat = text_feat + F.dropout(txt_tmp, p=0.1)
         try:
             if self.sal_pred == 'ca+mlp':
                 # pdb.set_trace()
@@ -519,12 +542,12 @@ class SLIP(nn.Module):
                 cross_video_feat = self.attn(video_feat.permute(1,0,2), video_feat.permute(1,0,2), video_feat.permute(1,0,2))[0].permute(1,0,2)
         except:
             pdb.set_trace()
-        if B_t < B_v:
-            text_feat = text_feat[: B_t, ::]
-            cross_text_feat = cross_text_feat[: B_t, ::]
-        if B_t > B_v:
-            video_feat = video_feat[: B_v, ::]
-            cross_video_feat = cross_video_feat[: B_v, ::]
+        # if B_t < B_v:
+        #     text_feat = text_feat[: B_t, ::]
+        #     cross_text_feat = cross_text_feat[: B_t, ::]
+        # if B_t > B_v:
+        #     video_feat = video_feat[: B_v, ::]
+        #     cross_video_feat = cross_video_feat[: B_v, ::]
 
         # saliency token
         if gauss:
@@ -547,26 +570,6 @@ class SLIP(nn.Module):
             text_mask = text_mask[:, : -1]
             video_mask = video_mask[:, : -1]
 
-            # vid_mu, vid_sigma = self.video_mu_fc(video_feat), self.video_sigma_fc(video_feat)
-            # txt_mu, txt_sigma = self.text_mu_fc(text_feat), self.text_sigma_fc(text_feat)
-
-            # B, N, C = video_feat.shape
-            # samples = [vid_mu]
-            # for _ in range(self.sample_num-1):
-            #     eps = torch.randn(B, N, C, device=vid_mu.device)
-            #     sample = vid_mu + torch.exp(vid_sigma) * eps
-            #     samples.append(sample)
-            # vid_tmp = torch.cat(samples).view(B, self.sample_num, N, C).mean(dim=1)
-            # video_feat = video_feat + F.dropout(vid_tmp, p=0.1)
-
-            # B, N, C = text_feat.shape
-            # samples = [txt_mu]
-            # for _ in range(self.sample_num-1):
-            #     eps = torch.randn(B, N, C, device=txt_mu.device)
-            #     sample = txt_mu + torch.exp(txt_sigma) * eps
-            #     samples.append(sample)
-            # txt_tmp = torch.cat(samples).view(B, self.sample_num, N, C).mean(dim=1)
-            # text_feat = text_feat + F.dropout(txt_tmp, p=0.1)
 
         else:
             # MLP
