@@ -278,8 +278,8 @@ class SLIP(nn.Module):
             loss_v2t = self.loss_fct(v2t_logits * logit_scale)
             aux_loss = (loss_t2v + loss_v2t) / 2
 
-            # rec_video_loss, rec_text_loss = self.get_rec_loss(text_feat, video_feat, text_mask, video_mask, text_weight, video_weight)
-            # temporal_loss = self.get_temporal_order_loss(text_feat, video_feat, text_mask, video_mask, text_weight, video_weight)
+            rec_video_loss, rec_text_loss = self.get_rec_loss(text_feat, video_feat, text_mask, video_mask, text_weight, video_weight)
+            temporal_loss = self.get_temporal_order_loss(text_feat, video_feat, text_mask, video_mask, text_weight, video_weight)
             # moment-text rec
             # rec_mt, rec_tm, div_loss, ivc_loss, rec_ref_loss, rec_neg1_loss, rec_neg2_loss, _ = self.get_moment_text_rec(text_feat, video_feat, text_mask, video_mask, props, text_weight, epoch)
             # rec_mt, rec_tm, div_loss, ivc_loss, rec_ref_loss, rec_neg1_loss, rec_neg2_loss = rec_mt.mean(), rec_tm.mean(), div_loss.mean(), ivc_loss.mean(), rec_ref_loss.mean(), rec_neg1_loss.mean(), rec_neg2_loss.mean()
@@ -288,7 +288,7 @@ class SLIP(nn.Module):
             tmp_0 = torch.zeros_like(retrieval_loss).cuda()
             tmp_0.requires_grad = False        
             div_loss = torch.max(retrieval_loss2 - retrieval_loss + self.margin2, tmp_0)
-            final_loss = retrieval_loss  + div_loss * 0.1 + aux_loss *0.5 # + (rec_video_loss + rec_text_loss)/2.0
+            final_loss = retrieval_loss  + div_loss * 0.1 + aux_loss *0.5  + (rec_video_loss + rec_text_loss)/2.0 + temporal_loss * 0.5
             # pdb.set_trace()
             final_loss_dict = {'final_loss': final_loss.item(), 
                                 'retrieval_loss': retrieval_loss.item(), 
