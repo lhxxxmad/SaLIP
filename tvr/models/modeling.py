@@ -510,7 +510,7 @@ class SLIP(nn.Module):
             eps = torch.randn(B, N, C, device=vid_mu.device)
             sample = vid_mu + torch.exp(vid_sigma) * eps
             samples.append(sample)
-        video_feat = torch.cat(samples).view(B, self.sample_num, N, C).mean(dim=1)
+        re_video_feat = torch.cat(samples).view(B, self.sample_num, N, C).mean(dim=1)
         # video_feat = video_feat + F.dropout(vid_tmp, p=0.1)
 
         B, N, C = text_feat.shape
@@ -519,14 +519,14 @@ class SLIP(nn.Module):
             eps = torch.randn(B, N, C, device=txt_mu.device)
             sample = txt_mu + torch.exp(txt_sigma) * eps
             samples.append(sample)
-        text_feat = torch.cat(samples).view(B, self.sample_num, N, C).mean(dim=1)
+        re_text_feat = torch.cat(samples).view(B, self.sample_num, N, C).mean(dim=1)
 
         # text_feat = text_feat + F.dropout(txt_tmp, p=0.1)
         try:
             if self.sal_pred == 'ca+mlp':
                 # pdb.set_trace()
-                cross_text_feat = self.xpool(text_feat, video_feat)
-                cross_video_feat = self.xpool(video_feat, text_feat)
+                cross_text_feat = self.xpool(re_text_feat, re_video_feat)
+                cross_video_feat = self.xpool(re_video_feat, re_text_feat)
                 # cross_text_feat = self.attn(text_feat.permute(1,0,2), video_feat.permute(1,0,2), video_feat.permute(1,0,2))[0].permute(1,0,2)
                 # cross_video_feat = self.attn(video_feat.permute(1,0,2), text_feat.permute(1,0,2), text_feat.permute(1,0,2))[0].permute(1,0,2)
             elif self.sal_pred == 'trans':
