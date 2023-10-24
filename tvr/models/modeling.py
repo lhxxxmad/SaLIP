@@ -103,17 +103,17 @@ class SLIP(nn.Module):
             nn.Linear(transformer_width, self.num_props * 2))
 
         self.video_mu_fc = nn.Sequential(
-            nn.Linear(transformer_width, transformer_width // 2), nn.ReLU(inplace=True),
-            nn.Linear(transformer_width// 2, transformer_width))
+            nn.Linear(transformer_width, transformer_width * 2), nn.ReLU(inplace=True),
+            nn.Linear(transformer_width* 2, transformer_width))
         self.video_sigma_fc = nn.Sequential(
-            nn.Linear(transformer_width, transformer_width // 2), nn.ReLU(inplace=True),
-            nn.Linear(transformer_width// 2, transformer_width))
+            nn.Linear(transformer_width, transformer_width * 2), nn.ReLU(inplace=True),
+            nn.Linear(transformer_width* 2, transformer_width))
         self.text_mu_fc = nn.Sequential(
-            nn.Linear(transformer_width, transformer_width // 2 ), nn.ReLU(inplace=True),
-            nn.Linear(transformer_width// 2, transformer_width))
+            nn.Linear(transformer_width, transformer_width * 2 ), nn.ReLU(inplace=True),
+            nn.Linear(transformer_width* 2, transformer_width))
         self.text_sigma_fc = nn.Sequential(
-            nn.Linear(transformer_width, transformer_width // 2), nn.ReLU(inplace=True),
-            nn.Linear(transformer_width// 2, transformer_width))
+            nn.Linear(transformer_width, transformer_width * 2), nn.ReLU(inplace=True),
+            nn.Linear(transformer_width* 2, transformer_width))
 
         ## ===> generate Gaussian masks
         self.mse_loss = nn.MSELoss(reduction='none')
