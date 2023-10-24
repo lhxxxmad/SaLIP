@@ -272,11 +272,11 @@ class SLIP(nn.Module):
             # tmp_0 = torch.zeros_like(retrieval_loss).cuda()
             # tmp_0.requires_grad = False        
             # div_loss = torch.max(retrieval_loss - retrieval_loss2 + self.margin2, tmp_0)
-            final_loss = retrieval_loss  #+ retrieval_loss2 *0.1 # + (rec_video_loss + rec_text_loss)/2.0
+            final_loss = retrieval_loss  + retrieval_loss2 # + (rec_video_loss + rec_text_loss)/2.0
 
             final_loss_dict = {'final_loss': final_loss.item(), 
                                 'retrieval_loss': retrieval_loss.item(), 
-                                # 'retrieval_loss2': retrieval_loss2.item(),
+                                'retrieval_loss2': retrieval_loss2.item(),
                                 # 'rec_video_loss': self.rec_loss_weight * rec_video_loss.item(), 
                                 # 'rec_text_loss': self.rec_loss_weight * rec_text_loss.item(),
                                 # 'rec_tm_loss': (self.lambda1 * rec_tm).item(),
@@ -711,8 +711,8 @@ class SLIP(nn.Module):
                 retrieve_logits1 = (t2v_logits1 + v2t_logits1) / 2.0
                 # retrieve_logits2 = (t2v_logits2 + v2t_logits2) / 2.0
                 
-                rate = 0.9
-                retrieve_logits = retrieve_logits0 * rate+ retrieve_logits1 * (1-rate)
+                # rate = 0.9
+                # retrieve_logits = retrieve_logits0 * rate+ retrieve_logits1 * (1-rate)
                 # retrieve_token_logits = torch.einsum('ad,bd->ab', [txt_token, vid_token])
 
                 # retrieve_logits1+= retrieve_token_logits*0.1
