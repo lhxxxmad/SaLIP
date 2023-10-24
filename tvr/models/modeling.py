@@ -685,8 +685,8 @@ class SLIP(nn.Module):
             retrieve_logits0 = torch.einsum('abtv,bv->abtv', [retrieve_logits0, video_mask.squeeze(-1)])
             retrieve_logits1 = torch.einsum('abtv,bv->abtv', [retrieve_logits1, video_mask1.squeeze(-1)])
             # pdb.set_trace()
-            # sim_ot = self.get_ot_sim(retrieve_logits0)
-            # retrieve_logits0 = retrieve_logits0 + sim_ot * 0.5
+            sim_ot = self.get_ot_sim(retrieve_logits0)
+            retrieve_logits0 = retrieve_logits0 + sim_ot * 0.5
             # retrieve_logits2 = torch.einsum('abtv,bv->abtv', [retrieve_logits, video_mask2.squeeze(-1)])
             text_sum = text_mask.sum(-1)
             video_sum = video_mask.sum(-1)
