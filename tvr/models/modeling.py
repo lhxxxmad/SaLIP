@@ -694,9 +694,9 @@ class SLIP(nn.Module):
 
             retrieve_logits0 = torch.einsum('abtv,bv->abtv', [retrieve_logits0, video_mask.squeeze(-1)])
             retrieve_logits1 = torch.einsum('abtv,bv->abtv', [retrieve_logits1, video_mask1.squeeze(-1)])
-
+            # pdb.set_trace()
             sim_ot = self.get_ot_sim(retrieve_logits0)
-            retrieve_logits0 = retrieve_logits0 + sim_ot * 0.5
+            retrieve_logits0 = retrieve_logits0 + sim_ot
             # retrieve_logits2 = torch.einsum('abtv,bv->abtv', [retrieve_logits, video_mask2.squeeze(-1)])
             text_sum = text_mask.sum(-1)
             video_sum = video_mask.sum(-1)
@@ -723,6 +723,7 @@ class SLIP(nn.Module):
                 
                 rate = 1.0
                 retrieve_logits = retrieve_logits0 * rate+ retrieve_logits1 * (1-rate)
+
                 # retrieve_token_logits = torch.einsum('ad,bd->ab', [txt_token, vid_token])
 
                 # retrieve_logits1+= retrieve_token_logits*0.1
@@ -775,8 +776,8 @@ class SLIP(nn.Module):
 
     def get_ot_sim(self, sim):
         a,b,t,v = sim.shape
-        sim = sim.contiguous().view(t,v,a*b)
-        sim = sim.permute(2,0,1)
+        sim = sim.contiguous().view(a*b,t,v)
+        # sim = sim.permute(2,0,1)
         wdist = 1.0 - sim
         xx=torch.zeros(a*b, t, dtype=sim.dtype, device=sim.device).fill_(1. / t)
         yy=torch.zeros(a*b, v, dtype=sim.dtype, device=sim.device).fill_(1. / v)
@@ -785,8 +786,8 @@ class SLIP(nn.Module):
             KK = torch.exp(-wdist / self.eps)
             T = self.Sinkhorn(KK,xx,yy)
         out = T * sim
-        out = out.permute(1,2,0).contiguous()
-        return out.view(a,b,t,v)
+        # out = out.permute(1,2,0)
+        return out.contiguous().view(a,b,t,v)
         
     def Sinkhorn(self, K, u, v):
         r = torch.ones_like(u)
