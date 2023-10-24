@@ -270,7 +270,7 @@ class SLIP(nn.Module):
                 video_mask = video_mask[:, : -1]
 
             rec_text_loss, rec_video_loss , temporal_loss = 0,0,0
-            pdb.set_trace()
+            # pdb.set_trace()
             t2v_logits, v2t_logits, *tmp = self.get_aux_logits(text_feat, video_feat, text_mask, video_mask)
             logit_scale = self.clip.logit_scale.exp()
 
