@@ -272,11 +272,11 @@ class SLIP(nn.Module):
             # tmp_0 = torch.zeros_like(retrieval_loss).cuda()
             # tmp_0.requires_grad = False        
             # div_loss = torch.max(retrieval_loss - retrieval_loss2 + self.margin2, tmp_0)
-            final_loss = retrieval_loss  + retrieval_loss2 # + (rec_video_loss + rec_text_loss)/2.0
+            final_loss = retrieval_loss  + retrieval_loss2 * 0.5 # + (rec_video_loss + rec_text_loss)/2.0
 
             final_loss_dict = {'final_loss': final_loss.item(), 
                                 'retrieval_loss': retrieval_loss.item(), 
-                                'retrieval_loss2': retrieval_loss2.item(),
+                                # 'retrieval_loss2': retrieval_loss2.item(),
                                 # 'rec_video_loss': self.rec_loss_weight * rec_video_loss.item(), 
                                 # 'rec_text_loss': self.rec_loss_weight * rec_text_loss.item(),
                                 # 'rec_tm_loss': (self.lambda1 * rec_tm).item(),
@@ -501,38 +501,40 @@ class SLIP(nn.Module):
         #     text_feat = torch.cat([text_feat, pad_feat], dim=0)
 
         # reparameter
-        vid_mu, vid_logsigma = self.video_mu_fc(video_feat), self.video_sigma_fc(video_feat)
-        txt_mu, txt_logsigma = self.text_mu_fc(text_feat), self.text_sigma_fc(text_feat)
+        # vid_mu, vid_logsigma = self.video_mu_fc(video_feat), self.video_sigma_fc(video_feat)
+        # txt_mu, txt_logsigma = self.text_mu_fc(text_feat), self.text_sigma_fc(text_feat)
 
-        samples = [txt_mu.unsqueeze(0)]
+        # B,N,C = text_feat.shape
+        # samples = [txt_mu.unsqueeze(0)]
         # samples = [txt_mu]
-        for _ in range(self.sample_num-1):
-            eps = torch.randn(B, N, C, device=txt_mu.device)
-            sample = txt_mu + torch.exp(txt_logsigma) * eps
-            # samples.append(sample.unsqueeze(0))
-            # samples.append(sample)
-            samples[0] = samples[0] + sample
-        # pdb.set_trace()
-        dis_text_feat = torch.cat(samples, dim=0).mean(dim=0)
-        # dis_text_feat = torch.cat(samples).view(B, self.sample_num, N, C).mean(dim=1)
+        # for _ in range(self.sample_num-1):
+        #     eps = torch.randn(B, N, C, device=txt_mu.device)
+        #     sample = txt_mu + torch.exp(txt_logsigma) * eps
+        #     # samples.append(sample.unsqueeze(0))
+        #     samples.append(sample)
+        #     # samples[0] = samples[0] + sample
+        # # pdb.set_trace()
+        # # dis_text_feat = torch.cat(samples, dim=0).mean(dim=0)
+        # # dis_text_feat = torch.cat(samples).view(B, self.sample_num, N, C).mean(dim=1)
         # dis_text_feat = torch.stack(samples).mean(dim=0)
-        # dis_text_feat = dis_text_feat[unshuffle_idx]
-        text_feat = text_feat + F.dropout(dis_text_feat, p=self.dropout)
+        # # dis_text_feat = dis_text_feat[unshuffle_idx]
+        # # text_feat = text_feat + F.dropout(dis_text_feat, p=self.dropout)
         # text_feat = dis_text_feat
 
-        B,N,C = video_feat.shape
-        # vid_mu, vid_logsigma, _ = self.dist_video_trans(video_feat, weight=video_weight)
-        vid_mu, vid_logsigma, _ = self.dist_video_trans(video_feat, weight=None)
-        samples = [vid_mu.unsqueeze(0)]
+        # B,N,C = video_feat.shape
+        # # vid_mu, vid_logsigma, _ = self.dist_video_trans(video_feat, weight=video_weight)
+        # vid_mu, vid_logsigma, _ = self.dist_video_trans(video_feat, weight=None)
+        # # samples = [vid_mu.unsqueeze(0)]
         # samples = [vid_mu]
-        for _ in range(self.sample_num-1):
-            eps = torch.randn(B, N, C, device=vid_mu.device)
-            sample = vid_mu + torch.exp(vid_logsigma) * eps
-            samples.append(sample.unsqueeze(0))
-        dis_video_feat = torch.cat(samples, dim=0).mean(dim=0)
-        # dis_video_feat = torch.cat(samples).view(B, self.sample_num, N, C).mean(dim=1)
+        # for _ in range(self.sample_num-1):
+        #     eps = torch.randn(B, N, C, device=vid_mu.device)
+        #     sample = vid_mu + torch.exp(vid_logsigma) * eps
+        #     samples.append(sample.unsqueeze(0))
+        # # dis_video_feat = torch.cat(samples, dim=0).mean(dim=0)
+        # # dis_video_feat = torch.cat(samples).view(B, self.sample_num, N, C).mean(dim=1)
         # dis_video_feat = torch.stack(samples).mean(dim=0)
-        video_feat = video_feat + F.dropout(dis_video_feat, p=self.dropout)
+        # # video_feat = video_feat + F.dropout(dis_video_feat, p=self.dropout)
+        # video_feat = dis_video_feat
 
         if self.sal_pred == 'ca+mlp':
             # pdb.set_trace()
@@ -593,12 +595,12 @@ class SLIP(nn.Module):
             video_weight = self.video_weight_fc(cross_video_feat).squeeze(2) # B_v x N_v x D -> B_v x N_v
 
 
-        # text_weight.masked_fill_(torch.tensor((1 - text_mask), dtype=torch.bool), float("-inf"))
-        # text_weight = torch.softmax(text_weight, dim=-1)  # B_t x N_t
+        text_weight = text_mask.masked_fill(torch.tensor((1 - text_mask), dtype=torch.bool), float("-inf"))
+        text_weight = torch.softmax(text_weight, dim=-1)  # B_t x N_t
         # text_weight = torch.sigmoid(text_weight)  # B_t x N_t            
 
-        # video_weight = video_weight.masked_fill(torch.tensor((1 - video_mask), dtype=torch.bool), float("-inf"))
-        # video_weight = torch.softmax(video_weight, dim=-1)  # B_v x N_v
+        video_weight = video_weight.masked_fill(torch.tensor((1 - video_mask), dtype=torch.bool), float("-inf"))
+        video_weight = torch.softmax(video_weight, dim=-1)  # B_v x N_v
 
         # 保留mask_rate的token
         if self.training_mask and self.training:
@@ -694,7 +696,7 @@ class SLIP(nn.Module):
 
             retrieve_logits0 = torch.einsum('abtv,bv->abtv', [retrieve_logits0, video_mask.squeeze(-1)])
             retrieve_logits1 = torch.einsum('abtv,bv->abtv', [retrieve_logits1, video_mask1.squeeze(-1)])
-            # pdb.set_trace()
+            pdb.set_trace()
             sim_ot = self.get_ot_sim(retrieve_logits0)
             retrieve_logits0 = retrieve_logits0 + sim_ot * 0.5
             # retrieve_logits2 = torch.einsum('abtv,bv->abtv', [retrieve_logits, video_mask2.squeeze(-1)])
