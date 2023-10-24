@@ -501,27 +501,39 @@ class SLIP(nn.Module):
         #     text_feat = torch.cat([text_feat, pad_feat], dim=0)
 
         # reparameter
-        vid_mu, vid_sigma = self.video_mu_fc(video_feat), self.video_sigma_fc(video_feat)
-        txt_mu, txt_sigma = self.text_mu_fc(text_feat), self.text_sigma_fc(text_feat)
+        vid_mu, vid_logsigma = self.video_mu_fc(video_feat), self.video_sigma_fc(video_feat)
+        txt_mu, txt_logsigma = self.text_mu_fc(text_feat), self.text_sigma_fc(text_feat)
 
-        B, N, C = video_feat.shape
-        samples = [vid_mu]
-        for _ in range(self.sample_num-1):
-            eps = torch.randn(B, N, C, device=vid_mu.device)
-            sample = vid_mu + torch.exp(vid_sigma) * eps
-            samples.append(sample)
-        video_feat = torch.cat(samples).view(B, self.sample_num, N, C).mean(dim=1)
-        # video_feat = video_feat + F.dropout(vid_tmp, p=0.1)
-
-        B, N, C = text_feat.shape
-        samples = [txt_mu]
+        samples = [txt_mu.unsqueeze(0)]
+        # samples = [txt_mu]
         for _ in range(self.sample_num-1):
             eps = torch.randn(B, N, C, device=txt_mu.device)
-            sample = txt_mu + torch.exp(txt_sigma) * eps
-            samples.append(sample)
-        text_feat = torch.cat(samples).view(B, self.sample_num, N, C).mean(dim=1)
+            sample = txt_mu + torch.exp(txt_logsigma) * eps
+            # samples.append(sample.unsqueeze(0))
+            # samples.append(sample)
+            samples[0] = samples[0] + sample
+        # pdb.set_trace()
+        dis_text_feat = torch.cat(samples, dim=0).mean(dim=0)
+        # dis_text_feat = torch.cat(samples).view(B, self.sample_num, N, C).mean(dim=1)
+        # dis_text_feat = torch.stack(samples).mean(dim=0)
+        # dis_text_feat = dis_text_feat[unshuffle_idx]
+        text_feat = text_feat + F.dropout(dis_text_feat, p=self.dropout)
+        # text_feat = dis_text_feat
 
-        # text_feat = text_feat + F.dropout(txt_tmp, p=0.1)
+        B,N,C = video_feat.shape
+        # vid_mu, vid_logsigma, _ = self.dist_video_trans(video_feat, weight=video_weight)
+        vid_mu, vid_logsigma, _ = self.dist_video_trans(video_feat, weight=None)
+        samples = [vid_mu.unsqueeze(0)]
+        # samples = [vid_mu]
+        for _ in range(self.sample_num-1):
+            eps = torch.randn(B, N, C, device=vid_mu.device)
+            sample = vid_mu + torch.exp(vid_logsigma) * eps
+            samples.append(sample.unsqueeze(0))
+        dis_video_feat = torch.cat(samples, dim=0).mean(dim=0)
+        # dis_video_feat = torch.cat(samples).view(B, self.sample_num, N, C).mean(dim=1)
+        # dis_video_feat = torch.stack(samples).mean(dim=0)
+        video_feat = video_feat + F.dropout(dis_video_feat, p=self.dropout)
+
         if self.sal_pred == 'ca+mlp':
             # pdb.set_trace()
             cross_text_feat = self.xpool(text_feat, video_feat)
