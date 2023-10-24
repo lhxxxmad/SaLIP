@@ -107,6 +107,8 @@ def get_args(description='Disentangled Representation Learning for Text-Video Re
     parser.add_argument('--mask_mode', type=str, default='dist')
 
     parser.add_argument('--freeze_clip', type=int, default=0)
+
+    parser.add_argument('--moment', type=float, default=0.99)
     args = parser.parse_args()
 
     return args
@@ -275,6 +277,12 @@ def train_epoch(epoch, args, model, train_dataloader, device, n_gpu, optimizer,
     global logger
     global best_score
     global meters
+    global ema_model
+
+    def _update_ema_variables(model, ema_model, alpha, global_step):
+        # alpha = min(1 - 1 / (global_step + 1), alpha)
+        for ema_param, param in zip(ema_model.parameters(), model.parameters()):
+            ema_param.data.mul_(alpha).add_(1 - alpha, param.data)
 
     torch.cuda.empty_cache()
     model.train()
@@ -318,6 +326,8 @@ def train_epoch(epoch, args, model, train_dataloader, device, n_gpu, optimizer,
             torch.clamp_(model.clip.logit_scale.data, max=np.log(100))
             logit_scale = model.clip.logit_scale.exp().item()
 
+        _update_ema_variables(model, ema_model, args.moment, epoch * len(train_dataloader) + step)
+
         batch_time = time.time() - end
         end = time.time()
 
@@ -356,10 +366,22 @@ def train_epoch(epoch, args, model, train_dataloader, device, n_gpu, optimizer,
             )
         if global_step % (log_step * 3) == 0 or global_step == 1:
             R1 = eval_epoch(args, model, val_dataloader, args.device)
-            if args.local_rank == 0:
-                if best_score <= R1:
+            ema_R1 = eval_epoch(args, ema_model, val_dataloader, args.device, "ema ")
+            # output_model_file = save_model(epoch, args, model, type_name="")
+            # output_ema_model_file = save_model(epoch, args, ema_model, type_name="ema")
+
+            if best_score <= max(R1, ema_R1):
+                if R1 < ema_R1:
+                    best_score = ema_R1
+                    # best_output_model_file = output_ema_model_file
+                    torch.save(ema_model.module.state_dict() if hasattr(ema_model, 'module') else ema_model.state_dict(),
+                               'best.pth')
+                else:
                     best_score = R1
-                    output_model_file = save_model(epoch, args, model, type_name="best")
+                    # best_output_model_file = output_model_file
+                    torch.save(model.module.state_dict() if hasattr(model, 'module') else model.state_dict(),
+                               'best.pth')
+
             model.train()
 
     total_loss = total_loss / len(train_dataloader)
@@ -389,7 +411,7 @@ def _run_on_single_gpu(model, t_mask_list, v_mask_list, t_feat_list, v_feat_list
     return sim_matrix
 
 
-def eval_epoch(args, model, test_dataloader, device):
+def eval_epoch(args, model, test_dataloader, device,type=""):
     global test_dataset
 
     if hasattr(model, 'module'):
@@ -547,11 +569,11 @@ def eval_epoch(args, model, test_dataloader, device):
     logger.info("time profile: feat {:.1f}s match {:.5f}s metrics {:.5f}s".format(toc1 - tic, toc2 - toc1, toc3 - toc2))
 
     logger.info(
-        "Text-to-Video: R@1: {:.1f} - R@5: {:.1f} - R@10: {:.1f} - R@50: {:.1f} - Median R: {:.1f} - Mean R: {:.1f}".
+        type + "Text-to-Video: R@1: {:.1f} - R@5: {:.1f} - R@10: {:.1f} - R@50: {:.1f} - Median R: {:.1f} - Mean R: {:.1f}".
         format(_tv_metrics['R1'], _tv_metrics['R5'], _tv_metrics['R10'], _tv_metrics['R50'], _tv_metrics['MR'],
                _tv_metrics['MeanR']))
     logger.info(
-        "Video-to-Text: R@1: {:.1f} - R@5: {:.1f} - R@10: {:.1f} - R@50: {:.1f} - Median R: {:.1f} - Mean R: {:.1f}".
+        type + "Video-to-Text: R@1: {:.1f} - R@5: {:.1f} - R@10: {:.1f} - R@50: {:.1f} - Median R: {:.1f} - Mean R: {:.1f}".
         format(_vt_metrics['R1'], _vt_metrics['R5'], _vt_metrics['R10'], _vt_metrics['R50'], _vt_metrics['MR'],
                _vt_metrics['MeanR']))
 
@@ -572,7 +594,8 @@ def main():
     global logger
     global best_score
     global meters
-
+    global ema_model
+    
     meters = MetricLogger(delimiter="  ")
     args = get_args()
     if not exists(args.output_dir):
@@ -582,6 +605,9 @@ def main():
     args = set_seed_logger(args)
 
     model = build_model(args)
+    ema_model = build_model(args)
+    for param in ema_model.parameters():
+        param.detach_()
 
     test_dataloader, val_dataloader, train_dataloader, train_sampler = build_dataloader(args)
 

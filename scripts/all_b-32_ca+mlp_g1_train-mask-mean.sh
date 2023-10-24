@@ -90,74 +90,6 @@ split_hosts=($split_hosts)
 # --interaction_mask 0.8 \
 # --mask_mode mean
 
-
-echo "train didemo"
-DATA_PATH=./data/didemo
-CUDA_VISIBLE_DEVICES=0,1,2,3,4,5,6,7 \
-python3 -m torch.distributed.launch --nproc_per_node=8 \
---master_addr ${ARNOLD_WORKER_0_HOST} \
---master_port ${ARNOLD_WORKER_0_PORT} \
-main.py \
---do_train 1 \
---workers 8 \
---n_display 1 \
---epochs 5 \
---lr 1e-4 \
---coef_lr 1e-3 \
---batch_size 128 \
---batch_size_val 128 \
---anno_path ${DATA_PATH}/ \
---video_path ${DATA_PATH}/videos \
---datatype didemo \
---max_words 64 \
---max_frames 64 \
---video_framerate 1 \
---output_dir outputs/didemo_ViT-B-32 \
---embd_mode wti \
---do_gauss 1 \
---video_mask_rate 0.8 \
---text_mask_rate 0.8 \
---temp_loss_weight 1.0 \
---rec_loss_weight 1.0 \
---ret_loss_weight 1.0 \
---sal_predictor ca+mlp \
---training_mask 1 \
---interaction_mask 0.8 \
---mask_mode mean
-
-
-echo "test didemo"
-CUDA_VISIBLE_DEVICES=0,1,2,3,4,5,6,7 \
-python3 -m torch.distributed.launch --nproc_per_node=8 \
---master_addr ${ARNOLD_WORKER_0_HOST} \
---master_port ${ARNOLD_WORKER_0_PORT} \
-main.py \
---do_eval 1 \
---workers 8 \
---n_display 1 \
---epochs 5 \
---lr 1e-4 \
---coef_lr 1e-3 \
---batch_size 128 \
---batch_size_val 128 \
---anno_path ${DATA_PATH}/ \
---video_path ${DATA_PATH}/videos \
---datatype didemo \
---max_words 64 \
---max_frames 64 \
---video_framerate 1 \
---init_model outputs/didemo_ViT-B-32/best.bin \
---output_dir outputs/didemo_ViT-B-32 \
---embd_mode wti \
---do_gauss 1 \
---video_mask_rate 0.8 \
---text_mask_rate 0.8 \
---sal_predictor ca+mlp \
---training_mask 1 \
---interaction_mask 0.8 \
---mask_mode mean
-
-
 echo "train msrvtt"
 DATA_PATH=./data/MSRVTT
 CUDA_VISIBLE_DEVICES=0,1,2,3,4,5,6,7 \
@@ -227,6 +159,75 @@ main.py \
 --training_mask 1 \
 --interaction_mask 0.8 \
 --mask_mode mean
+
+echo "train didemo"
+DATA_PATH=./data/didemo
+CUDA_VISIBLE_DEVICES=0,1,2,3,4,5,6,7 \
+python3 -m torch.distributed.launch --nproc_per_node=8 \
+--master_addr ${ARNOLD_WORKER_0_HOST} \
+--master_port ${ARNOLD_WORKER_0_PORT} \
+main.py \
+--do_train 1 \
+--workers 8 \
+--n_display 1 \
+--epochs 5 \
+--lr 1e-4 \
+--coef_lr 1e-3 \
+--batch_size 64 \
+--batch_size_val 128 \
+--anno_path ${DATA_PATH}/ \
+--video_path ${DATA_PATH}/videos \
+--datatype didemo \
+--max_words 64 \
+--max_frames 64 \
+--video_framerate 1 \
+--output_dir outputs/didemo_ViT-B-32 \
+--embd_mode wti \
+--do_gauss 1 \
+--video_mask_rate 0.8 \
+--text_mask_rate 0.8 \
+--temp_loss_weight 1.0 \
+--rec_loss_weight 1.0 \
+--ret_loss_weight 1.0 \
+--sal_predictor ca+mlp \
+--training_mask 1 \
+--interaction_mask 0.8 \
+--mask_mode mean
+
+
+echo "test didemo"
+CUDA_VISIBLE_DEVICES=0,1,2,3,4,5,6,7 \
+python3 -m torch.distributed.launch --nproc_per_node=8 \
+--master_addr ${ARNOLD_WORKER_0_HOST} \
+--master_port ${ARNOLD_WORKER_0_PORT} \
+main.py \
+--do_eval 1 \
+--workers 8 \
+--n_display 1 \
+--epochs 5 \
+--lr 1e-4 \
+--coef_lr 1e-3 \
+--batch_size 64 \
+--batch_size_val 128 \
+--anno_path ${DATA_PATH}/ \
+--video_path ${DATA_PATH}/videos \
+--datatype didemo \
+--max_words 64 \
+--max_frames 64 \
+--video_framerate 1 \
+--init_model outputs/didemo_ViT-B-32/best.bin \
+--output_dir outputs/didemo_ViT-B-32 \
+--embd_mode wti \
+--do_gauss 1 \
+--video_mask_rate 0.8 \
+--text_mask_rate 0.8 \
+--sal_predictor ca+mlp \
+--training_mask 1 \
+--interaction_mask 0.8 \
+--mask_mode mean
+
+
+
 
 # echo "test msrvtt->didemo"
 # DATA_PATH=./data/didemo
