@@ -572,8 +572,8 @@ class SLIP(nn.Module):
         
         # # dis_text_feat = torch.stack(samples).mean(dim=0)
         # # # dis_text_feat = dis_text_feat[unshuffle_idx]
-        text_feat = text_feat + F.dropout(dis_text_feat, p=self.dropout)
-        # text_feat = dis_text_feat
+        # text_feat = text_feat + F.dropout(dis_text_feat, p=self.dropout)
+        text_feat = dis_text_feat
 
         B,N,C = video_feat.shape
         # # vid_mu, vid_logsigma, _ = self.dist_video_trans(video_feat, weight=video_weight)
