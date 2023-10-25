@@ -564,10 +564,12 @@ class SLIP(nn.Module):
         # #     # samples[0] = samples[0] + sample
         # # # pdb.set_trace()
         dis_text_feat = torch.stack(samples)
-        # dis_text_feat = dis_text_feat.view(B, self.sample_num, N, C).mean(dim=1)
-        
+        if self.training:
+            dis_text_feat = dis_text_feat.view(B, self.sample_num, N, C).mean(dim=1)
+        else:
+            dis_text_feat = torch.roll(dis_text_feat,shifts=(2, 2),dims=(0, 1)).mean(dim=0)
         # dis_text_feat = torch.cat(samples, dim=0).mean(dim=0)
-        dis_text_feat = torch.roll(dis_text_feat,shifts=(2, 2),dims=(0, 1)).mean(dim=0)
+        
         # # dis_text_feat = torch.stack(samples).mean(dim=0)
         # # # dis_text_feat = dis_text_feat[unshuffle_idx]
         text_feat = text_feat + F.dropout(dis_text_feat, p=self.dropout)
@@ -585,9 +587,11 @@ class SLIP(nn.Module):
             samples.append(sample)
         
         dis_video_feat = torch.stack(samples)
-        # dis_video_feat = dis_video_feat.view(B, self.sample_num, N, C).mean(dim=1)
+        if self.training:
+            dis_video_feat = dis_video_feat.view(B, self.sample_num, N, C).mean(dim=1)
+        else:
+            dis_video_feat = torch.roll(dis_video_feat,shifts=(2, 2),dims=(0, 1)).mean(dim=0)
         # dis_video_feat = torch.cat(samples, dim=0).mean(dim=0)
-        dis_video_feat = torch.roll(dis_video_feat,shifts=(2, 2),dims=(0, 1)).mean(dim=0)
         # # dis_video_feat = torch.stack(samples).mean(dim=0)
         # video_feat = video_feat + F.dropout(dis_video_feat, p=self.dropout)
         video_feat = dis_video_feat
