@@ -548,8 +548,8 @@ class SLIP(nn.Module):
         #     text_feat = torch.cat([text_feat, pad_feat], dim=0)
 
         # reparameter
-        vid_mu, vid_logsigma = self.video_mu_fc(video_feat), self.video_sigma_fc(video_feat)
-        txt_mu, txt_logsigma = self.text_mu_fc(text_feat), self.text_sigma_fc(text_feat)
+        # vid_mu, vid_logsigma = self.video_mu_fc(video_feat), self.video_sigma_fc(video_feat)
+        # txt_mu, txt_logsigma = self.text_mu_fc(text_feat), self.text_sigma_fc(text_feat)
 
         B,N,C = text_feat.shape
         # samples = [txt_mu.unsqueeze(0)]
@@ -574,7 +574,7 @@ class SLIP(nn.Module):
         # # vid_mu, vid_logsigma, _ = self.dist_video_trans(video_feat, weight=video_weight)
         # vid_mu, vid_logsigma, _ = self.dist_video_trans(video_feat, weight=None)
         # # samples = [vid_mu.unsqueeze(0)]
-        # vid_mu, vid_logsigma = video_feat, video_feat
+        vid_mu, vid_logsigma = video_feat, video_feat
         samples = [vid_mu]
         for _ in range(self.sample_num-1):
             eps = torch.randn(B, N, C, device=vid_mu.device)
