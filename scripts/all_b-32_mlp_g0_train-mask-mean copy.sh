@@ -50,7 +50,7 @@ split_hosts=($split_hosts)
 # --text_mask_rate 0.1 \
 # --rec_trans_num_layers1 4 \
 # --rec_trans_num_layers2 4 \
-# --sal_predictor ca+mlp \
+# --sal_predictor mlp \
 # --training_mask 1 \
 # --interaction_mask 0.8 \
 # --mask_mode mean \
@@ -85,7 +85,7 @@ split_hosts=($split_hosts)
 # --rec_trans_num_layers1 4 \
 # --rec_trans_num_layers2 4 \
 # --tmp_trans_num_layers 4 \
-# --sal_predictor ca+mlp \
+# --sal_predictor mlp \
 # --training_mask 1 \
 # --interaction_mask 0.8 \
 # --mask_mode mean
@@ -120,7 +120,7 @@ main.py \
 --temp_loss_weight 1.0 \
 --rec_loss_weight 1.0 \
 --ret_loss_weight 1.0 \
---sal_predictor ca+mlp \
+--sal_predictor mlp \
 --training_mask 1 \
 --interaction_mask 0.8 \
 --mask_mode mean
@@ -152,7 +152,7 @@ main.py \
 --do_gauss 0 \
 --video_mask_rate 0.8 \
 --text_mask_rate 0.8 \
---sal_predictor ca+mlp \
+--sal_predictor mlp \
 --training_mask 1 \
 --interaction_mask 0.8 \
 --mask_mode mean
@@ -187,7 +187,7 @@ main.py \
 --temp_loss_weight 1.0 \
 --rec_loss_weight 1.0 \
 --ret_loss_weight 1.0 \
---sal_predictor ca+mlp \
+--sal_predictor mlp \
 --training_mask 1 \
 --interaction_mask 0.8 \
 --mask_mode mean
@@ -223,7 +223,7 @@ main.py \
 --temp_loss_weight 1.0 \
 --rec_loss_weight 1.0 \
 --ret_loss_weight 1.0 \
---sal_predictor ca+mlp \
+--sal_predictor mlp \
 --training_mask 1 \
 --interaction_mask 0.8 \
 --mask_mode mean
@@ -255,7 +255,7 @@ main.py \
 --do_gauss 0 \
 --video_mask_rate 0.8 \
 --text_mask_rate 0.8 \
---sal_predictor ca+mlp \
+--sal_predictor mlp \
 --training_mask 1 \
 --interaction_mask 0.8 \
 --mask_mode mean
@@ -289,7 +289,7 @@ main.py \
 --text_mask_rate 0.8 \
 --rec_trans_num_layers1 4 \
 --rec_trans_num_layers2 4 \
---sal_predictor ca+mlp \
+--sal_predictor mlp \
 --training_mask 1 \
 --interaction_mask 0.8 \
 --mask_mode mean
@@ -322,7 +322,7 @@ main.py \
 --text_mask_rate 0.8 \
 --rec_trans_num_layers1 4 \
 --rec_trans_num_layers2 4 \
---sal_predictor ca+mlp \
+--sal_predictor mlp \
 --training_mask 1 \
 --interaction_mask 0.8 \
 --mask_mode mean
@@ -355,7 +355,7 @@ main.py \
 --text_mask_rate 0.8 \
 --rec_trans_num_layers1 4 \
 --rec_trans_num_layers2 4 \
---sal_predictor ca+mlp \
+--sal_predictor mlp \
 --training_mask 1 \
 --interaction_mask 0.8 \
 --mask_mode mean

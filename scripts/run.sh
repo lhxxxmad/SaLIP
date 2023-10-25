@@ -19,7 +19,7 @@ main.py \
 --lr 1e-4 \
 --coef_lr 1e-3 \
 --batch_size 8 \
---batch_size_val 128 \
+--batch_size_val 256 \
 --anno_path /mnt/bd/cxx-dataset/CLIP4Clip_original/data/MSRVTT/msrvtt_data \
 --video_path /mnt/bd/cxx-dataset/CLIP4Clip_original/data/MSRVTT/MSRVTT_Videos \
 --datatype msrvtt \
@@ -28,7 +28,7 @@ main.py \
 --video_framerate 1 \
 --output_dir outputs/msrvtt \
 --embd_mode wti \
---do_gauss 1 \
+--do_gauss 0 \
 --video_mask_rate 0.7 \
 --text_mask_rate 0.7 \
 --temp_loss_weight 1.0 \
@@ -37,7 +37,7 @@ main.py \
 --sal_predictor ca+mlp \
 --training_mask 1 \
 --mask_mode mean \
-# --init_model /mnt/bd/cxx-dataset/SaLIP/SaLIP_model/outputs/msrvtt_ViT-B-32/best.bin
+# --init_model /mnt/bd/cxx-dataset/SaLIP/salip_mdoel/SaLIP_model/outputs/msrvtt_ViT-B-32/best.bin
 
 
 # 

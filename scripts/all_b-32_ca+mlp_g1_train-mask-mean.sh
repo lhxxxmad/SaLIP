@@ -36,7 +36,7 @@ split_hosts=($split_hosts)
 # --lr 1e-4 \
 # --coef_lr 1e-3 \
 # --batch_size 128 \
-# --batch_size_val 128 \
+# --batch_size_val 64 \
 # --anno_path ${DATA_PATH}/ \
 # --video_path ${DATA_PATH}/Activity_Videos \
 # --datatype activity \
@@ -69,7 +69,7 @@ split_hosts=($split_hosts)
 # --lr 1e-4 \
 # --coef_lr 1e-3 \
 # --batch_size 128 \
-# --batch_size_val 128 \
+# --batch_size_val 64 \
 # --anno_path ${DATA_PATH}/ \
 # --video_path ${DATA_PATH}/Activity_Videos \
 # --datatype activity \
@@ -104,7 +104,7 @@ main.py \
 --lr 1e-4 \
 --coef_lr 1e-3 \
 --batch_size 128 \
---batch_size_val 128 \
+--batch_size_val 64 \
 --anno_path ${DATA_PATH}/msrvtt_data \
 --video_path ${DATA_PATH}/MSRVTT_Videos \
 --datatype msrvtt \
@@ -139,7 +139,7 @@ main.py \
 --lr 1e-4 \
 --coef_lr 1e-3 \
 --batch_size 128 \
---batch_size_val 128 \
+--batch_size_val 64 \
 --anno_path ${DATA_PATH}/msrvtt_data \
 --video_path ${DATA_PATH}/MSRVTT_Videos \
 --datatype msrvtt \
@@ -174,7 +174,7 @@ main.py \
 --lr 1e-4 \
 --coef_lr 1e-3 \
 --batch_size 64 \
---batch_size_val 128 \
+--batch_size_val 64 \
 --anno_path ${DATA_PATH}/ \
 --video_path ${DATA_PATH}/videos \
 --datatype didemo \
@@ -208,7 +208,7 @@ main.py \
 --lr 1e-4 \
 --coef_lr 1e-3 \
 --batch_size 64 \
---batch_size_val 128 \
+--batch_size_val 64 \
 --anno_path ${DATA_PATH}/ \
 --video_path ${DATA_PATH}/videos \
 --datatype didemo \
@@ -243,7 +243,7 @@ main.py \
 # --lr 1e-4 \
 # --coef_lr 1e-3 \
 # --batch_size 128 \
-# --batch_size_val 128 \
+# --batch_size_val 64 \
 # --anno_path ${DATA_PATH}/ \
 # --video_path ${DATA_PATH}/videos \
 # --datatype didemo \
@@ -275,7 +275,7 @@ main.py \
 # --lr 1e-4 \
 # --coef_lr 1e-3 \
 # --batch_size 128 \
-# --batch_size_val 128 \
+# --batch_size_val 64 \
 # --anno_path ${DATA_PATH}/ \
 # --video_path ${DATA_PATH}/LSMDC_Videos \
 # --datatype lsmdc \
@@ -309,7 +309,7 @@ main.py \
 --lr 1e-4 \
 --coef_lr 1e-3 \
 --batch_size 128 \
---batch_size_val 128 \
+--batch_size_val 64 \
 --anno_path ${DATA_PATH}/ \
 --video_path ${DATA_PATH}/LSMDC_Videos \
 --datatype lsmdc \
@@ -341,7 +341,7 @@ main.py \
 --lr 1e-4 \
 --coef_lr 1e-3 \
 --batch_size 128 \
---batch_size_val 128 \
+--batch_size_val 64 \
 --anno_path ${DATA_PATH}/ \
 --video_path ${DATA_PATH}/LSMDC_Videos \
 --datatype lsmdc \

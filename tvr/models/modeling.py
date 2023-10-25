@@ -278,8 +278,8 @@ class SLIP(nn.Module):
             loss_v2t = self.loss_fct(v2t_logits * logit_scale)
             aux_loss = (loss_t2v + loss_v2t) / 2
 
-            rec_video_loss, rec_text_loss = self.get_rec_loss(text_feat, video_feat, text_mask, video_mask, text_weight, video_weight)
-            temporal_loss = self.get_temporal_order_loss(text_feat, video_feat, text_mask, video_mask, text_weight, video_weight)
+            # rec_video_loss, rec_text_loss = self.get_rec_loss(text_feat, video_feat, text_mask, video_mask, text_weight, video_weight)
+            # temporal_loss = self.get_temporal_order_loss(text_feat, video_feat, text_mask, video_mask, text_weight, video_weight)
             # moment-text rec
             # rec_mt, rec_tm, div_loss, ivc_loss, rec_ref_loss, rec_neg1_loss, rec_neg2_loss, _ = self.get_moment_text_rec(text_feat, video_feat, text_mask, video_mask, props, text_weight, epoch)
             # rec_mt, rec_tm, div_loss, ivc_loss, rec_ref_loss, rec_neg1_loss, rec_neg2_loss = rec_mt.mean(), rec_tm.mean(), div_loss.mean(), ivc_loss.mean(), rec_ref_loss.mean(), rec_neg1_loss.mean(), rec_neg2_loss.mean()
@@ -288,7 +288,7 @@ class SLIP(nn.Module):
             tmp_0 = torch.zeros_like(retrieval_loss).cuda()
             tmp_0.requires_grad = False        
             div_loss = torch.max(retrieval_loss2 - retrieval_loss + self.margin2, tmp_0)
-            final_loss = retrieval_loss  + div_loss * 0.1 + aux_loss *0.5  + (rec_video_loss + rec_text_loss)/2.0 + temporal_loss * 0.5
+            final_loss = retrieval_loss  + div_loss * 0.1 + aux_loss *0.5  #+ (rec_video_loss + rec_text_loss)/2.0 + temporal_loss * 0.5
             # pdb.set_trace()
             final_loss_dict = {'final_loss': final_loss.item(), 
                                 'retrieval_loss': retrieval_loss.item(), 
@@ -567,12 +567,12 @@ class SLIP(nn.Module):
         # dis_text_feat = torch.cat(samples).view(B, self.sample_num, N, C).mean(dim=1)
         # # dis_text_feat = torch.stack(samples).mean(dim=0)
         # # # dis_text_feat = dis_text_feat[unshuffle_idx]
-        # # # text_feat = text_feat + F.dropout(dis_text_feat, p=self.dropout)
-        # text_feat = dis_text_feat
+        # text_feat = text_feat + F.dropout(dis_text_feat, p=self.dropout)
+        # # text_feat = dis_text_feat
 
         # B,N,C = video_feat.shape
         # # vid_mu, vid_logsigma, _ = self.dist_video_trans(video_feat, weight=video_weight)
-        # vid_mu, vid_logsigma, _ = self.dist_video_trans(video_feat, weight=None)
+        # # vid_mu, vid_logsigma, _ = self.dist_video_trans(video_feat, weight=None)
         # # samples = [vid_mu.unsqueeze(0)]
         # vid_mu, vid_logsigma = video_feat, video_feat
         # samples = [vid_mu]
@@ -584,7 +584,7 @@ class SLIP(nn.Module):
         # # # dis_video_feat = torch.cat(samples, dim=0).mean(dim=0)
         # dis_video_feat = torch.cat(samples).view(B, self.sample_num, N, C).mean(dim=1)
         # # dis_video_feat = torch.stack(samples).mean(dim=0)
-        # # # video_feat = video_feat + F.dropout(dis_video_feat, p=self.dropout)
+        # video_feat = video_feat + F.dropout(dis_video_feat, p=self.dropout)
         # video_feat = dis_video_feat
 
         if self.sal_pred == 'ca+mlp':
@@ -822,6 +822,7 @@ class SLIP(nn.Module):
 
         if retrieve_logits1 is None:
             retrieve_logits1 = retrieve_logits
+        retrieve_logits = self.get_marginal_loss(retrieve_logits)
         return retrieve_logits, retrieve_logits.T, retrieve_logits1, retrieve_logits1.T, text_weight, video_weight, props
         # return retrieve_logits, retrieve_logits.T, props
 
@@ -1092,7 +1093,7 @@ class SLIP(nn.Module):
         return video_feat
 
 
-    def get_marginal_loss(self, cosx, m, s):
+    def get_marginal_loss(self, cosx, m=0.1, s=1):
         sinx = torch.sqrt(1.0 - torch.pow(cosx, 2))
         cosm = math.cos(m)
         sinm = math.sin(m)
