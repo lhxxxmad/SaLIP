@@ -55,13 +55,14 @@ class MultiHeadedAttention(nn.Module):
         attention_weights = F.softmax(attention_logits, dim=3)
 
         # num_vids x num_heads x head_dim x num_texts
-        attention = torch.einsum('avhd, abhvt->abhtd',[v, attention_weights])
+        attention = torch.einsum('avhd, abhvt->bhtd',[v, attention_weights])
+        # pdb.set_trace()
         # attention = v @ attention_weights
         # num_vids x num_texts x num_heads x head_dim
         # attention = attention.sum(dim=0)
         # attention = attention.permute(0,3,1,2)
-        attention = attention.reshape(num_vids, num_texts, num_words, self.embed_dim)
-        attention = attention.mean(dim=0)
+        attention = attention.reshape(num_texts, num_words, self.embed_dim)
+        # attention = attention.mean(dim=0)
         # num_vids x num_texts x embed_dim
         o = self.out_proj(attention)
         return o
