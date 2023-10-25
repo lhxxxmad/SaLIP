@@ -271,12 +271,12 @@ class SLIP(nn.Module):
 
             rec_text_loss, rec_video_loss , temporal_loss = 0,0,0
             # pdb.set_trace()
-            t2v_logits, v2t_logits, *tmp = self.get_aux_logits(text_feat, video_feat, text_mask, video_mask)
-            logit_scale = self.clip.logit_scale.exp()
+            # t2v_logits, v2t_logits, *tmp = self.get_aux_logits(text_feat, video_feat, text_mask, video_mask)
+            # logit_scale = self.clip.logit_scale.exp()
 
-            loss_t2v = self.loss_fct(t2v_logits * logit_scale)
-            loss_v2t = self.loss_fct(v2t_logits * logit_scale)
-            aux_loss = (loss_t2v + loss_v2t) / 2
+            # loss_t2v = self.loss_fct(t2v_logits * logit_scale)
+            # loss_v2t = self.loss_fct(v2t_logits * logit_scale)
+            # aux_loss = (loss_t2v + loss_v2t) / 2
 
             # rec_video_loss, rec_text_loss = self.get_rec_loss(text_feat, video_feat, text_mask, video_mask, text_weight, video_weight)
             # temporal_loss = self.get_temporal_order_loss(text_feat, video_feat, text_mask, video_mask, text_weight, video_weight)
@@ -288,14 +288,14 @@ class SLIP(nn.Module):
             tmp_0 = torch.zeros_like(retrieval_loss).cuda()
             tmp_0.requires_grad = False        
             div_loss = torch.max(retrieval_loss2 - retrieval_loss + self.margin2, tmp_0)
-            final_loss = retrieval_loss  + div_loss * 0.1 + aux_loss *0.5  #+ (rec_video_loss + rec_text_loss)/2.0 + temporal_loss * 0.5
+            final_loss = retrieval_loss  + div_loss * 0.1 #+ aux_loss *0.5  #+ (rec_video_loss + rec_text_loss)/2.0 + temporal_loss * 0.5
             # pdb.set_trace()
             final_loss_dict = {'final_loss': final_loss.item(), 
                                 'retrieval_loss': retrieval_loss.item(), 
                                 # 'retrieval_loss2': retrieval_loss2.item(),
                                 # 'rec_video_loss': self.rec_loss_weight * rec_video_loss.item(), 
                                 # 'rec_text_loss': self.rec_loss_weight * rec_text_loss.item(),
-                                'aux_loss': aux_loss.item()*0.5,
+                                # 'aux_loss': aux_loss.item()*0.5,
                                 'div_loss': div_loss.item()*0.1,
                                 # 'ivc_loss': ivc_loss.item(),
                                 # 'rec_mt_loss': rec_mt.item(),
@@ -548,43 +548,43 @@ class SLIP(nn.Module):
         #     text_feat = torch.cat([text_feat, pad_feat], dim=0)
 
         # reparameter
-        # vid_mu, vid_logsigma = self.video_mu_fc(video_feat), self.video_sigma_fc(video_feat)
-        # txt_mu, txt_logsigma = self.text_mu_fc(text_feat), self.text_sigma_fc(text_feat)
+        vid_mu, vid_logsigma = self.video_mu_fc(video_feat), self.video_sigma_fc(video_feat)
+        txt_mu, txt_logsigma = self.text_mu_fc(text_feat), self.text_sigma_fc(text_feat)
 
-        # B,N,C = text_feat.shape
-        # # samples = [txt_mu.unsqueeze(0)]
-        # txt_mu, txt_logsigma = text_feat, text_feat
-        # samples = [txt_mu]
+        B,N,C = text_feat.shape
+        # samples = [txt_mu.unsqueeze(0)]
+        txt_mu, txt_logsigma = text_feat, text_feat
+        samples = [txt_mu]
         
-        # for _ in range(self.sample_num-1):
-        #     eps = torch.randn(B, N, C, device=txt_mu.device)
-        #     sample = txt_mu + torch.exp(txt_logsigma) * eps
+        for _ in range(self.sample_num-1):
+            eps = torch.randn(B, N, C, device=txt_mu.device)
+            sample = txt_mu + torch.exp(txt_logsigma) * eps
         #     # samples.append(sample.unsqueeze(0))
-        #     samples.append(sample)
+            samples.append(sample)
         # #     # samples[0] = samples[0] + sample
         # # # pdb.set_trace()
-        # # # dis_text_feat = torch.cat(samples, dim=0).mean(dim=0)
-        # dis_text_feat = torch.cat(samples).view(B, self.sample_num, N, C).mean(dim=1)
+        # dis_text_feat = torch.cat(samples, dim=0).mean(dim=0)
+        dis_text_feat = torch.cat(samples).view(B, self.sample_num, N, C).mean(dim=1)
         # # dis_text_feat = torch.stack(samples).mean(dim=0)
         # # # dis_text_feat = dis_text_feat[unshuffle_idx]
-        # text_feat = text_feat + F.dropout(dis_text_feat, p=self.dropout)
+        text_feat = text_feat + F.dropout(dis_text_feat, p=self.dropout)
         # # text_feat = dis_text_feat
 
-        # B,N,C = video_feat.shape
+        B,N,C = video_feat.shape
         # # vid_mu, vid_logsigma, _ = self.dist_video_trans(video_feat, weight=video_weight)
-        # # vid_mu, vid_logsigma, _ = self.dist_video_trans(video_feat, weight=None)
+        # vid_mu, vid_logsigma, _ = self.dist_video_trans(video_feat, weight=None)
         # # samples = [vid_mu.unsqueeze(0)]
         # vid_mu, vid_logsigma = video_feat, video_feat
-        # samples = [vid_mu]
-        # for _ in range(self.sample_num-1):
-        #     eps = torch.randn(B, N, C, device=vid_mu.device)
-        #     sample = vid_mu + torch.exp(vid_logsigma) * eps
+        samples = [vid_mu]
+        for _ in range(self.sample_num-1):
+            eps = torch.randn(B, N, C, device=vid_mu.device)
+            sample = vid_mu + torch.exp(vid_logsigma) * eps
         #     # samples.append(sample.unsqueeze(0))
-        #     samples.append(sample)
-        # # # dis_video_feat = torch.cat(samples, dim=0).mean(dim=0)
-        # dis_video_feat = torch.cat(samples).view(B, self.sample_num, N, C).mean(dim=1)
+            samples.append(sample)
+        # dis_video_feat = torch.cat(samples, dim=0).mean(dim=0)
+        dis_video_feat = torch.cat(samples).view(B, self.sample_num, N, C).mean(dim=1)
         # # dis_video_feat = torch.stack(samples).mean(dim=0)
-        # video_feat = video_feat + F.dropout(dis_video_feat, p=self.dropout)
+        video_feat = video_feat + F.dropout(dis_video_feat, p=self.dropout)
         # video_feat = dis_video_feat
 
         if self.sal_pred == 'ca+mlp':
