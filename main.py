@@ -366,23 +366,10 @@ def train_epoch(epoch, args, model, train_dataloader, device, n_gpu, optimizer,
             )
         if global_step % (log_step * 3) == 0 or global_step == 1:
             R1 = eval_epoch(args, model, val_dataloader, args.device)
-            ema_R1 = -1
-            # ema_R1 = eval_epoch(args, ema_model, val_dataloader, args.device, "ema ")
-            # output_model_file = save_model(epoch, args, model, type_name="")
-            # output_ema_model_file = save_model(epoch, args, ema_model, type_name="ema")
-
-            if best_score <= max(R1, ema_R1):
-                if R1 < ema_R1:
-                    best_score = ema_R1
-                    # best_output_model_file = output_ema_model_file
-                    torch.save(ema_model.module.state_dict() if hasattr(ema_model, 'module') else ema_model.state_dict(),
-                               'best.pth')
-                else:
+            if args.local_rank == 0:
+                if best_score <= R1:
                     best_score = R1
-                    # best_output_model_file = output_model_file
-                    torch.save(model.module.state_dict() if hasattr(model, 'module') else model.state_dict(),
-                               'best.pth')
-
+                    output_model_file = save_model(epoch, args, model, type_name="best")
             model.train()
 
     total_loss = total_loss / len(train_dataloader)
