@@ -548,12 +548,12 @@ class SLIP(nn.Module):
         #     text_feat = torch.cat([text_feat, pad_feat], dim=0)
 
         ############################### reparameter ##########################
-        # vid_mu, vid_logsigma = self.video_mu_fc(video_feat), self.video_sigma_fc(video_feat)
-        # txt_mu, txt_logsigma = self.text_mu_fc(text_feat), self.text_sigma_fc(text_feat)
+        vid_mu, vid_logsigma = self.video_mu_fc(video_feat), self.video_sigma_fc(video_feat)
+        txt_mu, txt_logsigma = self.text_mu_fc(text_feat), self.text_sigma_fc(text_feat)
 
         B,N,C = text_feat.shape
         # samples = [txt_mu.unsqueeze(0)]
-        txt_mu, txt_logsigma = text_feat, text_feat
+        # txt_mu, txt_logsigma = text_feat, text_feat
         samples = [txt_mu]
         
         for _ in range(self.sample_num-1):
@@ -572,14 +572,14 @@ class SLIP(nn.Module):
         
         # # dis_text_feat = torch.stack(samples).mean(dim=0)
         # # # dis_text_feat = dis_text_feat[unshuffle_idx]
-        text_feat = text_feat + F.dropout(dis_text_feat, p=self.dropout)
-        # text_feat = dis_text_feat
+        # text_feat = text_feat + F.dropout(dis_text_feat, p=self.dropout)
+        text_feat = dis_text_feat
 
         B,N,C = video_feat.shape
         # # vid_mu, vid_logsigma, _ = self.dist_video_trans(video_feat, weight=video_weight)
         # vid_mu, vid_logsigma, _ = self.dist_video_trans(video_feat, weight=None)
         # # samples = [vid_mu.unsqueeze(0)]
-        vid_mu, vid_logsigma = video_feat, video_feat
+        # vid_mu, vid_logsigma = video_feat, video_feat
         samples = [vid_mu]
         for _ in range(self.sample_num-1):
             eps = torch.randn(B, N, C, device=vid_mu.device)
@@ -593,8 +593,8 @@ class SLIP(nn.Module):
             dis_video_feat = torch.roll(dis_video_feat,shifts=(2, 2),dims=(0, 1)).mean(dim=0)
         # dis_video_feat = torch.cat(samples, dim=0).mean(dim=0)
         # # dis_video_feat = torch.stack(samples).mean(dim=0)
-        video_feat = video_feat + F.dropout(dis_video_feat, p=self.dropout)
-        # video_feat = dis_video_feat
+        # video_feat = video_feat + F.dropout(dis_video_feat, p=self.dropout)
+        video_feat = dis_video_feat
         ##############################
 
         if self.sal_pred == 'ca+mlp':
@@ -756,8 +756,8 @@ class SLIP(nn.Module):
             retrieve_logits0 = torch.einsum('abtv,bv->abtv', [retrieve_logits0, video_mask.squeeze(-1)])
             retrieve_logits1 = torch.einsum('abtv,bv->abtv', [retrieve_logits1, video_mask1.squeeze(-1)])
             # pdb.set_trace()
-            sim_ot = self.get_ot_sim(retrieve_logits0)
-            retrieve_logits0 = retrieve_logits0 + sim_ot
+            # sim_ot = self.get_ot_sim(retrieve_logits0)
+            # retrieve_logits0 = retrieve_logits0 + sim_ot
             # retrieve_logits2 = torch.einsum('abtv,bv->abtv', [retrieve_logits, video_mask2.squeeze(-1)])
             text_sum = text_mask.sum(-1)
             video_sum = video_mask.sum(-1)
@@ -832,7 +832,7 @@ class SLIP(nn.Module):
 
         if retrieve_logits1 is None:
             retrieve_logits1 = retrieve_logits
-        retrieve_logits = self.get_marginal_loss(retrieve_logits)
+        # retrieve_logits = self.get_marginal_loss(retrieve_logits)
         return retrieve_logits, retrieve_logits.T, retrieve_logits1, retrieve_logits1.T, text_weight, video_weight, props
         # return retrieve_logits, retrieve_logits.T, props
 
