@@ -277,12 +277,12 @@ def train_epoch(epoch, args, model, train_dataloader, device, n_gpu, optimizer,
     global logger
     global best_score
     global meters
-    global ema_model
+    # global ema_model
 
-    def _update_ema_variables(model, ema_model, alpha, global_step):
-        # alpha = min(1 - 1 / (global_step + 1), alpha)
-        for ema_param, param in zip(ema_model.parameters(), model.parameters()):
-            ema_param.data.mul_(alpha).add_(1 - alpha, param.data)
+    # def _update_ema_variables(model, ema_model, alpha, global_step):
+    #     # alpha = min(1 - 1 / (global_step + 1), alpha)
+    #     for ema_param, param in zip(ema_model.parameters(), model.parameters()):
+    #         ema_param.data.mul_(alpha).add_(1 - alpha, param.data)
 
     torch.cuda.empty_cache()
     model.train()
@@ -326,7 +326,7 @@ def train_epoch(epoch, args, model, train_dataloader, device, n_gpu, optimizer,
             torch.clamp_(model.clip.logit_scale.data, max=np.log(100))
             logit_scale = model.clip.logit_scale.exp().item()
 
-        _update_ema_variables(model, ema_model, args.moment, epoch * len(train_dataloader) + step)
+        # _update_ema_variables(model, ema_model, args.moment, epoch * len(train_dataloader) + step)
 
         batch_time = time.time() - end
         end = time.time()
@@ -366,7 +366,8 @@ def train_epoch(epoch, args, model, train_dataloader, device, n_gpu, optimizer,
             )
         if global_step % (log_step * 3) == 0 or global_step == 1:
             R1 = eval_epoch(args, model, val_dataloader, args.device)
-            ema_R1 = eval_epoch(args, ema_model, val_dataloader, args.device, "ema ")
+            ema_R1 = -1
+            # ema_R1 = eval_epoch(args, ema_model, val_dataloader, args.device, "ema ")
             # output_model_file = save_model(epoch, args, model, type_name="")
             # output_ema_model_file = save_model(epoch, args, ema_model, type_name="ema")
 
@@ -594,7 +595,7 @@ def main():
     global logger
     global best_score
     global meters
-    global ema_model
+    # global ema_model
     
     meters = MetricLogger(delimiter="  ")
     args = get_args()
@@ -605,9 +606,9 @@ def main():
     args = set_seed_logger(args)
 
     model = build_model(args)
-    ema_model = build_model(args)
-    for param in ema_model.parameters():
-        param.detach_()
+    # ema_model = build_model(args)
+    # for param in ema_model.parameters():
+    #     param.detach_()
 
     test_dataloader, val_dataloader, train_dataloader, train_sampler = build_dataloader(args)
 
