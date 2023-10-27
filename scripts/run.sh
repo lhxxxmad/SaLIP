@@ -12,7 +12,7 @@ python3 -m torch.distributed.launch --nproc_per_node=1 \
 --master_addr ${ARNOLD_WORKER_0_HOST} \
 --master_port 59999 \
 main.py \
---do_eval 1 \
+--do_train 1 \
 --workers 0 \
 --n_display 50 \
 --epochs 5 \
@@ -34,10 +34,10 @@ main.py \
 --temp_loss_weight 1.0 \
 --rec_loss_weight 1.0 \
 --ret_loss_weight 1.0 \
---sal_predictor ca+mlp \
---training_mask 1 \
+--sal_predictor mlp \
+--training_mask 0 \
 --mask_mode mean \
---init_model /mnt/bd/cxx-dataset/SaLIP/salip_mdoel/SaLIP_model/outputs/msrvtt_ViT-B-32/best.bin
+# --init_model /mnt/bd/cxx-dataset/SaLIP/salip_mdoel/SaLIP_model/outputs/msrvtt_ViT-B-32/best.bin
 
 
 # 
