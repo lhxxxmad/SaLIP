@@ -572,8 +572,8 @@ class SLIP(nn.Module):
         
         # # dis_text_feat = torch.stack(samples).mean(dim=0)
         # # # dis_text_feat = dis_text_feat[unshuffle_idx]
-        # text_feat = text_feat + F.dropout(dis_text_feat, p=self.dropout)
-        text_feat = dis_text_feat
+        text_feat = text_feat + F.dropout(dis_text_feat, p=self.dropout)
+        # text_feat = dis_text_feat
 
         B,N,C = video_feat.shape
         # # vid_mu, vid_logsigma, _ = self.dist_video_trans(video_feat, weight=video_weight)
@@ -593,8 +593,8 @@ class SLIP(nn.Module):
             dis_video_feat = torch.roll(dis_video_feat,shifts=(2, 2),dims=(0, 1)).mean(dim=0)
         # dis_video_feat = torch.cat(samples, dim=0).mean(dim=0)
         # # dis_video_feat = torch.stack(samples).mean(dim=0)
-        # video_feat = video_feat + F.dropout(dis_video_feat, p=self.dropout)
-        video_feat = dis_video_feat
+        video_feat = video_feat + F.dropout(dis_video_feat, p=self.dropout)
+        # video_feat = dis_video_feat
         ##############################
 
         if self.sal_pred == 'ca+mlp':
