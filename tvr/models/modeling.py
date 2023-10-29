@@ -340,11 +340,11 @@ class SLIP(nn.Module):
             # tmp_0 = torch.zeros_like(retrieval_loss).cuda()
             # tmp_0.requires_grad = False        
             # div_loss = torch.max(retrieval_loss2 - retrieval_loss + self.margin2, tmp_0)
-            final_loss = retrieval_loss  #+ retrieval_loss2 #div_loss * 0.1 #+ aux_loss *0.5  #+ (rec_video_loss + rec_text_loss)/2.0 + temporal_loss * 0.5
+            final_loss = retrieval_loss  + retrieval_loss2 * 0.5 #div_loss * 0.1 #+ aux_loss *0.5  #+ (rec_video_loss + rec_text_loss)/2.0 + temporal_loss * 0.5
             # pdb.set_trace()
             final_loss_dict = {'final_loss': final_loss.item(), 
                                 'retrieval_loss': retrieval_loss.item(), 
-                                # 'retrieval_loss2': retrieval_loss2.item(),
+                                'retrieval_loss2': retrieval_loss2.item(),
                                 # 'rec_video_loss': self.rec_loss_weight * rec_video_loss.item(), 
                                 # 'rec_text_loss': self.rec_loss_weight * rec_text_loss.item(),
                                 # 'aux_loss': aux_loss.item()*0.5,
@@ -813,7 +813,7 @@ class SLIP(nn.Module):
             sim_ot = self.get_ot_sim(retrieve_logits0, text_weight, video_weight)
             # pdb.set_trace()
             # retrieve_logits0 = retrieve_logits0 + sim_ot
-            retrieve_logits0 = sim_ot
+            retrieve_logits1 = sim_ot
             # retrieve_logits2 = torch.einsum('abtv,bv->abtv', [retrieve_logits, video_mask2.squeeze(-1)])
             text_sum = text_mask.sum(-1)
             video_sum = video_mask.sum(-1)
