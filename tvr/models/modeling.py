@@ -811,6 +811,7 @@ class SLIP(nn.Module):
             retrieve_logits1 = torch.einsum('abtv,bv->abtv', [retrieve_logits1, video_mask1.squeeze(-1)])
             # import ot
             # ot.sinkhorn(text_weight,video_weight,retrieve_logits,1.0,method='sinkhorn',numItermax=100, epsilon0=1e-6)
+            # pdb.set_trace()
             sim_ot = self.get_ot_sim(retrieve_logits0, text_weight, video_weight)
             
             # retrieve_logits0 = retrieve_logits0 + sim_ot
@@ -895,7 +896,9 @@ class SLIP(nn.Module):
             retrieve_logits1 = retrieve_logits
         # retrieve_logits = self.get_marginal_loss(retrieve_logits)
         # retrieve_logits1 = retrieve_logits_ot
-        retrieve_logits1 = sim_ot
+        # retrieve_logits1 = sim_ot
+        retrieve_logits1 = retrieve_logits
+        retrieve_logits = sim_ot
         return retrieve_logits, retrieve_logits.T, retrieve_logits1, retrieve_logits1.T, text_weight, video_weight, props
         # return retrieve_logits, retrieve_logits.T, props
 
@@ -906,7 +909,7 @@ class SLIP(nn.Module):
         a,b,t,v = sim.shape
         sim = sim.contiguous().view(a*b,t,v)
         # sim = sim.permute(2,0,1)
-        # pdb.set_trace()
+        
         wdist = 1.0 - sim
         xx=torch.zeros(a*b, t, dtype=sim.dtype, device=sim.device).fill_(1.)
         xx=xx.view(a,b,t)*text_weight.unsqueeze(1)
