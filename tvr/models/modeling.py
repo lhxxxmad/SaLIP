@@ -858,11 +858,11 @@ class SLIP(nn.Module):
                 # retrieve_logits2 = torch.einsum('abv,bv->ab', [retrieve_logits2, gauss_weight])
                 # retrieve_logits = retrieve_logits1 + retrieve_logits2 * 0.1
 
-                # t2v_logits_ot, max_idx1 = sim_ot.max(dim=-1)  # abtv -> abt
-                # v2t_logits_ot, max_idx2 = sim_ot.max(dim=-2)  # abtv -> abv
-                # t2v_logits_ot = torch.sum(t2v_logits_ot, dim=2) / (text_sum.unsqueeze(1))
-                # v2t_logits_ot = torch.sum(v2t_logits_ot, dim=2) / (video_sum.unsqueeze(0))
-                # retrieve_logits_ot = (t2v_logits_ot + v2t_logits_ot) / 2.0
+                t2v_logits_ot, max_idx1 = sim_ot.max(dim=-1)  # abtv -> abt
+                v2t_logits_ot, max_idx2 = sim_ot.max(dim=-2)  # abtv -> abv
+                t2v_logits_ot = torch.sum(t2v_logits_ot, dim=2) / (text_sum.unsqueeze(1))
+                v2t_logits_ot = torch.sum(v2t_logits_ot, dim=2) / (video_sum.unsqueeze(0))
+                retrieve_logits_ot = (t2v_logits_ot + v2t_logits_ot) / 2.0
             elif self.interact_mode == 'FGM':
                 t2v_logits, max_idx1 = retrieve_logits.max(dim=-1)  # abtv -> abt
                 v2t_logits, max_idx2 = retrieve_logits.max(dim=-2)  # abtv -> abv
@@ -901,7 +901,7 @@ class SLIP(nn.Module):
         # retrieve_logits1 = retrieve_logits
         # retrieve_logits = sim_ot
 
-        retrieve_logits = retrieve_logits * 0.3 + sim_ot * 0.7
+        retrieve_logits = retrieve_logits * 0.4 + retrieve_logits_ot * 0.6
         return retrieve_logits, retrieve_logits.T, retrieve_logits1, retrieve_logits1.T, text_weight, video_weight, props
         # return retrieve_logits, retrieve_logits.T, props
 
@@ -927,10 +927,10 @@ class SLIP(nn.Module):
             # T = self.sinkhorn(xx, yy, torch.exp(wdist / self.eps))[1]
 
         out = T * sim
-        # out = out.contiguous().view(a,b,t,v)
+        out = out.contiguous().view(a,b,t,v)
         # out = out.permute(1,2,0)
-        return out.contiguous().view(a,b,t,v).sum(dim=[2,3])
-        # return out
+        # return out.contiguous().view(a,b,t,v).sum(dim=[2,3])
+        return out
         
     def Sinkhorn(self, K, u, v):
         r = torch.ones_like(u)
