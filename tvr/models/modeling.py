@@ -1179,9 +1179,9 @@ class SLIP(nn.Module):
         t2v_logits1, v2t_logits1, t2v_logits2, v2t_logits2, text_weight, video_weight, props = self.get_similarity_logits(text_feat, cls, video_feat, text_mask, video_mask, video_attention_mask=video_attention_mask, gauss=self.do_gauss)
         
         logit_scale = self.clip.logit_scale.exp()
-
-        # t2v_logits = self.get_marginal_loss(t2v_logits, 0.25, 0.05)/logit_scale
-        # v2t_logits = self.get_marginal_loss(v2t_logits, 0.25, 0.05)/logit_scale
+        # pdb.set_trace()
+        t2v_logits1 = self.get_marginal_loss(t2v_logits1, 0.2, 0.5)/logit_scale
+        v2t_logits1 = self.get_marginal_loss(v2t_logits1, 0.2, 0.5)/logit_scale
 
         loss_t2v1 = self.loss_fct(t2v_logits1 * logit_scale)
         loss_v2t1 = self.loss_fct(v2t_logits1 * logit_scale)
