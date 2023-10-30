@@ -3,9 +3,9 @@ cd data
 # echo "download anet"
 # hdfs dfs -get hdfs://haruna/home/byte_arnold_lq_mlnlc/user/chengxuxin/lhx/VL/data/anet.tar.gz
 # tar -zxvf anet.tar.gz
-echo "download didemo"
-hdfs dfs -get hdfs://haruna/home/byte_arnold_lq_mlnlc/user/chengxuxin/lhx/VL/data/didemo.zip 
-unzip didemo.zip  -d ./
+# echo "download didemo"
+# hdfs dfs -get hdfs://haruna/home/byte_arnold_lq_mlnlc/user/chengxuxin/lhx/VL/data/didemo.zip 
+# unzip didemo.zip  -d ./
 echo "download msrvtt"
 hdfs dfs -get hdfs://haruna/home/byte_arnold_lq_mlnlc/user/chengxuxin/lhx/VL/data/MSRVTT.tar.gz
 tar -zxvf MSRVTT.tar.gz
@@ -91,73 +91,73 @@ split_hosts=($split_hosts)
 # --mask_mode mean
 
 
-echo "train didemo"
-DATA_PATH=./data/didemo
-CUDA_VISIBLE_DEVICES=0,1,2,3,4,5,6,7 \
-python3 -m torch.distributed.launch --nproc_per_node=8 \
---master_addr ${ARNOLD_WORKER_0_HOST} \
---master_port ${ARNOLD_WORKER_0_PORT} \
-main.py \
---do_train 1 \
---workers 8 \
---n_display 1 \
---epochs 5 \
---lr 1e-4 \
---coef_lr 1e-3 \
---batch_size 128 \
---batch_size_val 128 \
---anno_path ${DATA_PATH}/ \
---video_path ${DATA_PATH}/videos \
---datatype didemo \
---max_words 64 \
---max_frames 64 \
---video_framerate 1 \
---output_dir outputs/didemo_ViT-B-32 \
---embd_mode wti \
---do_gauss 0 \
---video_mask_rate 0.8 \
---text_mask_rate 0.8 \
---temp_loss_weight 1.0 \
---rec_loss_weight 1.0 \
---ret_loss_weight 1.0 \
---sal_predictor mlp \
---training_mask 0 \
---interaction_mask 0.8 \
---mask_mode mean \
---distribution 0
+# echo "train didemo"
+# DATA_PATH=./data/didemo
+# CUDA_VISIBLE_DEVICES=0,1,2,3,4,5,6,7 \
+# python3 -m torch.distributed.launch --nproc_per_node=8 \
+# --master_addr ${ARNOLD_WORKER_0_HOST} \
+# --master_port ${ARNOLD_WORKER_0_PORT} \
+# main.py \
+# --do_train 1 \
+# --workers 8 \
+# --n_display 1 \
+# --epochs 5 \
+# --lr 1e-4 \
+# --coef_lr 1e-3 \
+# --batch_size 128 \
+# --batch_size_val 128 \
+# --anno_path ${DATA_PATH}/ \
+# --video_path ${DATA_PATH}/videos \
+# --datatype didemo \
+# --max_words 64 \
+# --max_frames 64 \
+# --video_framerate 1 \
+# --output_dir outputs/didemo_ViT-B-32 \
+# --embd_mode wti \
+# --do_gauss 0 \
+# --video_mask_rate 0.8 \
+# --text_mask_rate 0.8 \
+# --temp_loss_weight 1.0 \
+# --rec_loss_weight 1.0 \
+# --ret_loss_weight 1.0 \
+# --sal_predictor mlp \
+# --training_mask 0 \
+# --interaction_mask 0.8 \
+# --mask_mode mean \
+# --distribution 0
 
 
-echo "test didemo"
-CUDA_VISIBLE_DEVICES=0,1,2,3,4,5,6,7 \
-python3 -m torch.distributed.launch --nproc_per_node=8 \
---master_addr ${ARNOLD_WORKER_0_HOST} \
---master_port ${ARNOLD_WORKER_0_PORT} \
-main.py \
---do_eval 1 \
---workers 8 \
---n_display 1 \
---epochs 5 \
---lr 1e-4 \
---coef_lr 1e-3 \
---batch_size 128 \
---batch_size_val 128 \
---anno_path ${DATA_PATH}/ \
---video_path ${DATA_PATH}/videos \
---datatype didemo \
---max_words 64 \
---max_frames 64 \
---video_framerate 1 \
---init_model outputs/didemo_ViT-B-32/best.bin \
---output_dir outputs/didemo_ViT-B-32 \
---embd_mode wti \
---do_gauss 0 \
---video_mask_rate 0.8 \
---text_mask_rate 0.8 \
---sal_predictor mlp \
---training_mask 0 \
---interaction_mask 0.8 \
---mask_mode mean \
---distribution 0
+# echo "test didemo"
+# CUDA_VISIBLE_DEVICES=0,1,2,3,4,5,6,7 \
+# python3 -m torch.distributed.launch --nproc_per_node=8 \
+# --master_addr ${ARNOLD_WORKER_0_HOST} \
+# --master_port ${ARNOLD_WORKER_0_PORT} \
+# main.py \
+# --do_eval 1 \
+# --workers 8 \
+# --n_display 1 \
+# --epochs 5 \
+# --lr 1e-4 \
+# --coef_lr 1e-3 \
+# --batch_size 128 \
+# --batch_size_val 128 \
+# --anno_path ${DATA_PATH}/ \
+# --video_path ${DATA_PATH}/videos \
+# --datatype didemo \
+# --max_words 64 \
+# --max_frames 64 \
+# --video_framerate 1 \
+# --init_model outputs/didemo_ViT-B-32/best.bin \
+# --output_dir outputs/didemo_ViT-B-32 \
+# --embd_mode wti \
+# --do_gauss 0 \
+# --video_mask_rate 0.8 \
+# --text_mask_rate 0.8 \
+# --sal_predictor mlp \
+# --training_mask 0 \
+# --interaction_mask 0.8 \
+# --mask_mode mean \
+# --distribution 0
 
 
 echo "train msrvtt"
