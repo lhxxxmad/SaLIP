@@ -813,7 +813,7 @@ class SLIP(nn.Module):
             sim_ot = self.get_ot_sim(retrieve_logits0, text_weight, video_weight)
             # pdb.set_trace()
             # retrieve_logits0 = retrieve_logits0 + sim_ot
-            retrieve_logits1 = sim_ot
+            # retrieve_logits1 = sim_ot
             # retrieve_logits2 = torch.einsum('abtv,bv->abtv', [retrieve_logits, video_mask2.squeeze(-1)])
             text_sum = text_mask.sum(-1)
             video_sum = video_mask.sum(-1)
@@ -856,7 +856,11 @@ class SLIP(nn.Module):
                 # retrieve_logits2 = torch.einsum('abv,bv->ab', [retrieve_logits2, gauss_weight])
                 # retrieve_logits = retrieve_logits1 + retrieve_logits2 * 0.1
 
-
+                t2v_logits_ot, max_idx1 = sim_ot.max(dim=-1)  # abtv -> abt
+                v2t_logits_ot, max_idx2 = sim_ot.max(dim=-2)  # abtv -> abv
+                t2v_logits_ot = torch.sum(t2v_logits_ot, dim=2) / (text_sum.unsqueeze(1))
+                v2t_logits_ot = torch.sum(v2t_logits_ot, dim=2) / (video_sum.unsqueeze(0))
+                retrieve_logits_ot = (t2v_logits_ot + v2t_logits_ot) / 2.0
             elif self.interact_mode == 'FGM':
                 t2v_logits, max_idx1 = retrieve_logits.max(dim=-1)  # abtv -> abt
                 v2t_logits, max_idx2 = retrieve_logits.max(dim=-2)  # abtv -> abv
@@ -889,7 +893,7 @@ class SLIP(nn.Module):
         if retrieve_logits1 is None:
             retrieve_logits1 = retrieve_logits
         # retrieve_logits = self.get_marginal_loss(retrieve_logits)
-        # retrieve_logits1 = sim_ot
+        retrieve_logits1 = retrieve_logits_ot
         return retrieve_logits, retrieve_logits.T, retrieve_logits1, retrieve_logits1.T, text_weight, video_weight, props
         # return retrieve_logits, retrieve_logits.T, props
 
@@ -1180,8 +1184,8 @@ class SLIP(nn.Module):
         
         logit_scale = self.clip.logit_scale.exp()
         # pdb.set_trace()
-        t2v_logits1 = self.get_marginal_loss(t2v_logits1, 0.2, 0.5)/logit_scale
-        v2t_logits1 = self.get_marginal_loss(v2t_logits1, 0.2, 0.5)/logit_scale
+        # t2v_logits1 = self.get_marginal_loss(t2v_logits1, 0.2, 0.5)/logit_scale
+        # v2t_logits1 = self.get_marginal_loss(v2t_logits1, 0.2, 0.5)/logit_scale
 
         loss_t2v1 = self.loss_fct(t2v_logits1 * logit_scale)
         loss_v2t1 = self.loss_fct(v2t_logits1 * logit_scale)
