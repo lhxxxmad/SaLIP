@@ -720,9 +720,9 @@ class SLIP(nn.Module):
         if self.training_mask and self.training:
             # print("training mask")
             
-            _, t_mask = self._mask_feat(text_feat, text_mask.sum(1), text_weight, mask_rate=self.config.text_mask_rate, mode=self.config.mask_mode, mask_idx='0',thresholds=1.0)
+            _, t_mask = self._mask_feat(text_feat, text_mask.sum(1), text_weight, mask_rate=self.config.text_mask_rate, mode=self.config.mask_mode, mask_idx='0',thresholds=0.6)
             text_mask1 = text_mask * t_mask.squeeze(-1)
-            _, v_mask1 = self._mask_feat(video_feat, video_mask.sum(1), video_weight, mask_rate=self.config.interaction_mask, mode=self.config.mask_mode, mask_idx='0',thresholds=1.0)
+            _, v_mask1 = self._mask_feat(video_feat, video_mask.sum(1), video_weight, mask_rate=self.config.interaction_mask, mode=self.config.mask_mode, mask_idx='0',thresholds=0.6)
             # v_mask2 = 1 - v_mask1
             video_mask1 = video_mask * v_mask1.squeeze(-1)
             # video_mask2 = video_mask * v_mask2.squeeze(-1)
