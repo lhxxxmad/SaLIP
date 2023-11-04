@@ -9,7 +9,7 @@ class MultiHeadedAttention(nn.Module):
     def __init__(self, config):
         super(MultiHeadedAttention, self).__init__()
         self.embed_dim = 512
-        self.num_heads = 2
+        self.num_heads = 1
         assert self.embed_dim % self.num_heads == 0
         self.head_dim = self.embed_dim // self.num_heads
         
@@ -103,15 +103,15 @@ class XPool(nn.Module):
         Output
             out: num_vids x num_texts x embed_dim
         """
-        text_embeds = self.layer_norm1(text_embeds)
-        video_embeds = self.layer_norm1(video_embeds)
+        # text_embeds = self.layer_norm1(text_embeds)
+        # video_embeds = self.layer_norm1(video_embeds)
 
         # num_vids x num_texts x embed_dim
         attn_out = self.cross_attn(text_embeds, video_embeds)
         attn_out = self.layer_norm2(attn_out)
 
-        linear_out = self.linear_proj(attn_out)
-        out = attn_out + self.dropout(linear_out)
-        out = self.layer_norm3(out)
+        # linear_out = self.linear_proj(attn_out)
+        # out = attn_out + self.dropout(linear_out)
+        # out = self.layer_norm3(out)
 
-        return out
+        return attn_out

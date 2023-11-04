@@ -576,13 +576,13 @@ class SLIP(nn.Module):
         return retrieve_logits, retrieve_logits.T, retrieve_logits, retrieve_logits.T, text_weight, video_weight, None
 
     def get_similarity_logits(self, text_feat, cls, video_feat, text_mask, video_mask, video_attention_mask=None, gauss=False):
-        video_mask = video_mask.squeeze()
-        text_mask = text_mask.squeeze()
+        # video_mask = video_mask.squeeze()
+        # text_mask = text_mask.squeeze()
         # crossmodal_cyc_loss, inmodal_cyc_loss, inmodal_contras_loss = 0., 0., 0.
         cls, video_feat = cls.contiguous(), video_feat.contiguous()
 
-        video_mask = video_mask.squeeze()
-        text_mask = text_mask.squeeze()
+        # video_mask = video_mask.squeeze()
+        # text_mask = text_mask.squeeze()
         props = None
         retrieve_logits2 = None
         ############################
@@ -710,7 +710,7 @@ class SLIP(nn.Module):
             video_weight = self.video_weight_fc(cross_video_feat).squeeze(2) # B_v x N_v x D -> B_v x N_v
 
         text_weight = text_weight.masked_fill(torch.tensor((1 - text_mask), dtype=torch.bool), float("-inf"))
-        text_weight = torch.softmax(text_weight, dim=-1)  # B_t x N_t
+        text_weight = 1-torch.softmax(text_weight, dim=-1)  # B_t x N_t
         # text_weight = torch.sigmoid(text_weight)  # B_t x N_t            
 
         video_weight = video_weight.masked_fill(torch.tensor((1 - video_mask), dtype=torch.bool), float("-inf"))
@@ -720,8 +720,8 @@ class SLIP(nn.Module):
         if self.training_mask and self.training:
             # print("training mask")
             
-            _, t_mask = self._mask_feat(text_feat, text_mask.sum(1), text_weight, mask_rate=self.config.text_mask_rate, mode=self.config.mask_mode, mask_idx='0',thresholds=0.6)
-            text_mask1 = text_mask * t_mask.squeeze(-1)
+            # _, t_mask = self._mask_feat(text_feat, text_mask.sum(1), text_weight, mask_rate=self.config.text_mask_rate, mode=self.config.mask_mode, mask_idx='0',thresholds=0.6)
+            # text_mask1 = text_mask * t_mask.squeeze(-1)
             _, v_mask1 = self._mask_feat(video_feat, video_mask.sum(1), video_weight, mask_rate=self.config.interaction_mask, mode=self.config.mask_mode, mask_idx='0',thresholds=0.6)
             # v_mask2 = 1 - v_mask1
             video_mask1 = video_mask * v_mask1.squeeze(-1)
@@ -734,7 +734,7 @@ class SLIP(nn.Module):
             # video_weight = torch.softmax(video_weight, dim=-1)  # B_v x N_v
             # # video_weight = torch.sigmoid(video_weight)  # B_v x N_v
         else:
-            text_mask1 =text_mask
+            # text_mask1 =text_mask
             video_mask1 = video_mask
             # video_mask2 = video_mask
 
@@ -804,16 +804,51 @@ class SLIP(nn.Module):
             cls_feat = cls/cls.norm(dim=-1, keepdim=True)
             # 
             retrieve_logits = torch.einsum('atd,bvd->abtv', [text_feat, video_feat])
-            retrieve_logits0 = torch.einsum('abtv,at->abtv', [retrieve_logits, text_mask])
-            retrieve_logits1 = torch.einsum('abtv,at->abtv', [retrieve_logits, text_mask1])
+            retrieve_logits = torch.einsum('abtv,at->abtv', [retrieve_logits, text_mask])
+            # retrieve_logits1 = torch.einsum('abtv,at->abtv', [retrieve_logits, text_mask1])
 
-            retrieve_logits0 = torch.einsum('abtv,bv->abtv', [retrieve_logits0, video_mask.squeeze(-1)])
-            retrieve_logits1 = torch.einsum('abtv,bv->abtv', [retrieve_logits1, video_mask1.squeeze(-1)])
+            retrieve_logits0 = torch.einsum('abtv,bv->abtv', [retrieve_logits, video_mask.squeeze(-1)])
+            retrieve_logits1 = torch.einsum('abtv,bv->abtv', [retrieve_logits, video_mask1.squeeze(-1)])
             # import ot
             # ot.sinkhorn(text_weight,video_weight,retrieve_logits,1.0,method='sinkhorn',numItermax=100, epsilon0=1e-6)
             # pdb.set_trace()
-            sim_ot = self.get_ot_sim(retrieve_logits0, text_weight, video_weight)
+
+            # sim_ot = self.get_ot_sim(retrieve_logits0, text_weight, video_weight)
             
+            # import seaborn as sns
+            # import matplotlib.pyplot as plt
+            # import numpy as np
+            # retrieve_logits0 = retrieve_logits0.squeeze()[:10].cpu().numpy()
+
+            # 使用Seaborn创建热力图
+            # sns.heatmap(retrieve_logits0, annot=False, cmap='YlOrRd', linewidths=1)
+
+
+            # plt.title('Heatmap Example')
+            # plt.figure(dpi=600)
+            # min_val = np.min(retrieve_logits0)
+            # max_val = np.max(retrieve_logits0)
+            # retrieve_logits0 = (retrieve_logits0 - min_val) / (max_val - min_val)
+            # plt.imshow(retrieve_logits0, cmap='coolwarm', aspect='auto', origin='lower')
+            # # plt.colorbar()
+      
+            # plt.axis('off')
+            # plt.tight_layout()
+            # plt.savefig("sim.png")
+            # # plt.clf()
+            
+            # plt.figure(dpi=600)
+            # sim_ot = sim_ot.squeeze()[:10].cpu().numpy()
+            # min_val = np.min(sim_ot)
+            # max_val = np.max(sim_ot)
+            # sim_ot = (sim_ot - min_val) / (max_val - min_val)
+            # plt.imshow(sim_ot, cmap='coolwarm', aspect='auto', origin='lower')
+            # plt.colorbar()
+            # plt.axis('off')
+            # plt.tight_layout()
+            # plt.savefig("sim_ot.png")
+            # pdb.set_trace()
+
             # retrieve_logits0 = retrieve_logits0 + sim_ot
             # retrieve_logits1 = sim_ot
             # retrieve_logits2 = torch.einsum('abtv,bv->abtv', [retrieve_logits, video_mask2.squeeze(-1)])
@@ -858,11 +893,11 @@ class SLIP(nn.Module):
                 # retrieve_logits2 = torch.einsum('abv,bv->ab', [retrieve_logits2, gauss_weight])
                 # retrieve_logits = retrieve_logits1 + retrieve_logits2 * 0.1
 
-                t2v_logits_ot, max_idx1 = sim_ot.max(dim=-1)  # abtv -> abt
-                v2t_logits_ot, max_idx2 = sim_ot.max(dim=-2)  # abtv -> abv
-                t2v_logits_ot = torch.sum(t2v_logits_ot, dim=2) / (text_sum.unsqueeze(1))
-                v2t_logits_ot = torch.sum(v2t_logits_ot, dim=2) / (video_sum.unsqueeze(0))
-                retrieve_logits_ot = (t2v_logits_ot + v2t_logits_ot) / 2.0
+                # t2v_logits_ot, max_idx1 = sim_ot.max(dim=-1)  # abtv -> abt
+                # v2t_logits_ot, max_idx2 = sim_ot.max(dim=-2)  # abtv -> abv
+                # t2v_logits_ot = torch.sum(t2v_logits_ot, dim=2) / (text_sum.unsqueeze(1))
+                # v2t_logits_ot = torch.sum(v2t_logits_ot, dim=2) / (video_sum.unsqueeze(0))
+                # retrieve_logits_ot = (t2v_logits_ot + v2t_logits_ot) / 2.0
             elif self.interact_mode == 'FGM':
                 t2v_logits, max_idx1 = retrieve_logits.max(dim=-1)  # abtv -> abt
                 v2t_logits, max_idx2 = retrieve_logits.max(dim=-2)  # abtv -> abv
@@ -901,7 +936,7 @@ class SLIP(nn.Module):
         # retrieve_logits1 = retrieve_logits
         # retrieve_logits = sim_ot
 
-        retrieve_logits = retrieve_logits * 0.4 + retrieve_logits_ot * 0.6
+        # retrieve_logits = retrieve_logits * 0.4 + retrieve_logits_ot * 0.6
         return retrieve_logits, retrieve_logits.T, retrieve_logits1, retrieve_logits1.T, text_weight, video_weight, props
         # return retrieve_logits, retrieve_logits.T, props
 
